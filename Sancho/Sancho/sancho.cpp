@@ -55,18 +55,35 @@ int main(int argc, char * argv[]) {
 	// configure global opengl state
 	// -----------------------------
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_PROGRAM_POINT_SIZE);
 	glDepthFunc(GL_LESS);
 	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
-	PointCloud* point_cloud = load_point_cloud("test.txt", 4, 3);
+	PointCloud* point_cloud = load_point_cloud("../test.txt", 4, 3);
+
+	Shader point_cloud_shader("point_cloud.vert","point_cloud.frag");
+
+	GLuint VAO,VBO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	glGenBuffers(1, &VBO);
+	
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(point_cloud->points), point_cloud->points, GL_STATIC_DRAW);
 
 	Timer t, totalTime;
 
 	while (!glfwWindowShouldClose(window))
 	{
 		// Background Fill Color
-		glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		point_cloud_shader.use();
+		
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_POINTS, 0, point_cloud->no_of_points);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
