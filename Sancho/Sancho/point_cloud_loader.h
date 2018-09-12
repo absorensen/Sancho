@@ -4,19 +4,20 @@
 #include <string>
 #include "point_cloud.h"
 
-PointCloud* load_point_cloud(const std::string path, const unsigned int no_of_points, const unsigned int no_of_coords) 
+void load_point_cloud(const std::string path, const unsigned int no_of_points, const unsigned int no_of_coords, PointCloud &point_cloud) 
 {
 	std::ifstream infile(path.c_str());
-	PointCloud point_cloud;
+	//PointCloud point_cloud;
 	point_cloud.points = new float[no_of_points*no_of_coords];
 	point_cloud.no_of_coords = no_of_coords;
 	point_cloud.no_of_points = no_of_points;
 	point_cloud.size = no_of_coords * no_of_points;
-	for (int i = 0; i < point_cloud.size; ++i) {
+	const int size = point_cloud.size;
+	for (int i = 0; i < size; ++i) {
 		infile >> point_cloud.points[i];
-		std::cout << point_cloud.points[i] << ' ';
+		//std::cout << point_cloud.points[i] << ' ';
 	}
 	infile.close();
-	return &point_cloud;
+	return;
 }
 #endif

@@ -1,15 +1,16 @@
 #include "sancho.h"
 
 // settings
-const unsigned int SCR_WIDTH = 512;
-const unsigned int SCR_HEIGHT = 512;
+const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_HEIGHT = 800;
 const float Z_NEAR = 0.1f;
 const float Z_FAR = 100.0f;
 const float ASPECT_RATIO = ((float)SCR_WIDTH) / SCR_HEIGHT;
 static const float scale = 1.0f / static_cast<float>(SCR_WIDTH);
 
 // camera
-Camera camera(-2.0f, 1.5f, 3.4f, 0.0f, 1.0f, 0.0f, -50.0f, -12.0f);
+//Camera camera(-2.0f, 1.5f, 3.4f, 0.0f, 1.0f, 0.0f, -50.0f, -12.0f);
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -29,7 +30,7 @@ int main(int argc, char * argv[]) {
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Quixote", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Sancho", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -56,38 +57,66 @@ int main(int argc, char * argv[]) {
 	// -----------------------------
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_PROGRAM_POINT_SIZE);
-	glDepthFunc(GL_LESS);
+	glEnable(GL_POINT_SMOOTH);
+	//glDepthFunc(GL_LESS);
 	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
-	PointCloud* point_cloud = load_point_cloud("../test.txt", 4, 3);
+	PointCloud point_cloud;
+	load_point_cloud("../test.txt", 4, 3, point_cloud);
 
 	Shader point_cloud_shader("point_cloud.vert","point_cloud.frag");
 
 	GLuint VAO,VBO;
 	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
 	glBindVertexArray(VAO);
 
-	glGenBuffers(1, &VBO);
-	
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(point_cloud->points), point_cloud->points, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*point_cloud.size, point_cloud.points, GL_STATIC_DRAW);
+	GLint position_attribute = glGetAttribLocation(point_cloud_shader.ID, "aPos");
+	glVertexAttribPointer(position_attribute, point_cloud.no_of_coords, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	point_cloud_shader.use();
+	point_cloud_shader.setVec3("color", 0.9f, 0.4f, 0.0f);
+	point_cloud_shader.setFloat("point_size", 8.0f);
 
 	Timer t, totalTime;
 
 	while (!glfwWindowShouldClose(window))
 	{
-		// Background Fill Color
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		process_input(window);
+
+		const double currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+		glClearColor(0.1f, 0.1f, 0.4f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, Z_NEAR, Z_FAR);
+		glm::mat4 view = camera.GetViewMatrix();
+		glm::mat4 model = glm::mat4(1.0f);
+		glm::mat4 MVPmatrix = projection * view * model;
 
 		point_cloud_shader.use();
-		
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_POINTS, 0, point_cloud->no_of_points);
+		point_cloud_shader.setMat4("MVPmatrix", MVPmatrix);
+		point_cloud_shader.setVec3("CamPos", camera.Position);
 
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_POINTS, 0, point_cloud.no_of_points);
+		
+		
+		glBindVertexArray(0);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}   
+
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+
 	
 	glfwTerminate();
 	
@@ -95,9 +124,25 @@ int main(int argc, char * argv[]) {
 }
 
 void process_input(GLFWwindow* window) {
-	// if escape was pressed, suggest closing the window
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+			camera.ProcessKeyboard(FORWARD, deltaTime);
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	{
+			camera.ProcessKeyboard(BACKWARD, deltaTime);
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	{
+			camera.ProcessKeyboard(LEFT, deltaTime);
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	{
+			camera.ProcessKeyboard(RIGHT, deltaTime);
+	}
+
 }
 
 
