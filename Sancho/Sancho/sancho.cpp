@@ -6,7 +6,8 @@ const unsigned int SCR_HEIGHT = 800;
 const float Z_NEAR = 0.1f;
 const float Z_FAR = 100.0f;
 const float ASPECT_RATIO = ((float)SCR_WIDTH) / SCR_HEIGHT;
-static const float scale = 1.0f / static_cast<float>(SCR_WIDTH);
+static const float SCALE = 1.0f / static_cast<float>(SCR_WIDTH);
+static const float PI = 3.14159265359f;
 
 // camera
 //Camera camera(-2.0f, 1.5f, 3.4f, 0.0f, 1.0f, 0.0f, -50.0f, -12.0f);
@@ -80,9 +81,18 @@ int main(int argc, char * argv[]) {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
+	float fovy = 60; // degrees
+	int viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	float height_of_near_plane = (float)abs(viewport[3] - viewport[1]) /
+		(2 * tan(0.5*fovy*PI / 180.0));
+
 	point_cloud_shader.use();
 	point_cloud_shader.setVec3("color", 0.9f, 0.4f, 0.0f);
-	point_cloud_shader.setFloat("point_size", 8.0f);
+	point_cloud_shader.setFloat("point_size", 0.3f);
+	point_cloud_shader.setFloat("z_near", Z_NEAR);
+	point_cloud_shader.setFloat("z_far", Z_FAR);
+	point_cloud_shader.setFloat("height_of_near_plane", height_of_near_plane);
 
 	Timer t, totalTime;
 
@@ -102,8 +112,8 @@ int main(int argc, char * argv[]) {
 		glm::mat4 MVPmatrix = projection * view * model;
 
 		point_cloud_shader.use();
-		point_cloud_shader.setMat4("MVPmatrix", MVPmatrix);
-		point_cloud_shader.setVec3("CamPos", camera.Position);
+		point_cloud_shader.setMat4("mvp_matrix", MVPmatrix);
+		point_cloud_shader.setVec3("cam_pos", camera.Position);
 
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_POINTS, 0, point_cloud.no_of_points);
