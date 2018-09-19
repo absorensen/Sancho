@@ -133,24 +133,45 @@ int main(int argc, char * argv[]) {
 	return EXIT_SUCCESS;
 }
 
+double deltaTimeMod;
 void process_input(GLFWwindow* window) {
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
+		return;
+	}
+
+	deltaTimeMod = deltaTime;
+	
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+		deltaTimeMod *= 5.0;
+	}
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-			camera.ProcessKeyboard(FORWARD, deltaTime);
+		camera.ProcessKeyboard(FORWARD, deltaTimeMod);
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+			camera.ProcessKeyboard(FORWARD, deltaTimeMod);
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
-			camera.ProcessKeyboard(BACKWARD, deltaTime);
+			camera.ProcessKeyboard(BACKWARD, deltaTimeMod);
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-			camera.ProcessKeyboard(LEFT, deltaTime);
+			camera.ProcessKeyboard(LEFT, deltaTimeMod);
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-			camera.ProcessKeyboard(RIGHT, deltaTime);
+			camera.ProcessKeyboard(RIGHT, deltaTimeMod);
+	}
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+	{
+		camera.ProcessKeyboard(UP, deltaTimeMod);
+	}
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+	{
+		camera.ProcessKeyboard(DOWN, deltaTimeMod);
 	}
 
 }
