@@ -16,6 +16,12 @@
     <Filter Include="Source Files\Shader Files">
       <UniqueIdentifier>{4d86fa67-13bf-4fe9-81cb-8044267acf93}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Fragmenting Planes">
+      <UniqueIdentifier>{71f3c985-c93f-445a-a0b8-057151db88fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Fragmenting Planes">
+      <UniqueIdentifier>{bdf2a6f2-3b4d-4370-83de-5f29d9771820}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sancho.cpp">
@@ -23,6 +29,12 @@
     </ClCompile>
     <ClCompile Include="glad.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fp_octree.cpp">
+      <Filter>Source Files\Fragmenting Planes</Filter>
+    </ClCompile>
+    <ClCompile Include="fragmenting_planes.cpp">
+      <Filter>Source Files\Fragmenting Planes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -43,6 +55,15 @@
     </ClInclude>
     <ClInclude Include="point_cloud.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fp_octree.h">
+      <Filter>Header Files\Fragmenting Planes</Filter>
+    </ClInclude>
+    <ClInclude Include="fragmenting_planes.h">
+      <Filter>Header Files\Fragmenting Planes</Filter>
+    </ClInclude>
+    <ClInclude Include="fp_settings.h">
+      <Filter>Header Files\Fragmenting Planes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

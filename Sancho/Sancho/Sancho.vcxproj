@@ -124,11 +124,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="fragmenting_planes.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="fp_octree.cpp" />
     <ClCompile Include="sancho.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
+    <ClInclude Include="fp_octree.h" />
+    <ClInclude Include="fp_settings.h" />
+    <ClInclude Include="fragmenting_planes.h" />
     <ClInclude Include="os_timer.h" />
     <ClInclude Include="point_cloud.h" />
     <ClInclude Include="point_cloud_loader.h" />
