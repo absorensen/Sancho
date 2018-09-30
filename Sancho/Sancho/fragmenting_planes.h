@@ -1,4 +1,4 @@
-// all files with the prefix fp_ or fragmenting_planes
+// all files with the prefix 3dkht_
 // are based on 3DKHT: 
 // http://www.inf.ufrgs.br/~oliveira/pubs_files/HT3D/HT3D_page.html
 
@@ -6,8 +6,8 @@
 #ifndef FRAGMENTING_PLANES_H
 #define FRAGMENTING_PLANES_H
 
-#include "fp_settings.h"
-#include "fp_octree.h"
+#include "kht3d_settings.h"
+#include "kht3d_octree.h"
 
 class fragmenting_planes {
 public:

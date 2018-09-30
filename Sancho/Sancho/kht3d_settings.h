@@ -1,8 +1,4 @@
 #pragma once
-
-#ifndef FP_SETTINGS_H
-#define FP_SETTINGS_H
-
 #define debugplanes
 //#define realtime
 
@@ -12,10 +8,10 @@
 
 #include <string>
 
-class fp_settings {
+class kht3d_settings {
 public:
 
-	fp_settings()
+	kht3d_settings()
 	{
 		// Accumulator discretization
 		phi_num = 30;
@@ -93,5 +89,3 @@ public:
 	std::string file;
 	std::string extension;
 };
-
-#endif

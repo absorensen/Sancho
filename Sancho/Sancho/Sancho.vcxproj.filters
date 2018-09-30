@@ -22,6 +22,12 @@
     <Filter Include="Header Files\Fragmenting Planes">
       <UniqueIdentifier>{bdf2a6f2-3b4d-4370-83de-5f29d9771820}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\kht3d">
+      <UniqueIdentifier>{2116349f-aa9f-4ef6-b8b2-be184d78ba58}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\kht3d">
+      <UniqueIdentifier>{237b4a00-3a3d-4159-b45b-90487bcdf6c0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sancho.cpp">
@@ -30,11 +36,11 @@
     <ClCompile Include="glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fp_octree.cpp">
-      <Filter>Source Files\Fragmenting Planes</Filter>
-    </ClCompile>
     <ClCompile Include="fragmenting_planes.cpp">
       <Filter>Source Files\Fragmenting Planes</Filter>
+    </ClCompile>
+    <ClCompile Include="kht3d_octree.cpp">
+      <Filter>Source Files\kht3d</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -56,14 +62,20 @@
     <ClInclude Include="point_cloud.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="fp_octree.h">
-      <Filter>Header Files\Fragmenting Planes</Filter>
-    </ClInclude>
     <ClInclude Include="fragmenting_planes.h">
       <Filter>Header Files\Fragmenting Planes</Filter>
     </ClInclude>
-    <ClInclude Include="fp_settings.h">
-      <Filter>Header Files\Fragmenting Planes</Filter>
+    <ClInclude Include="kht3d_octree.h">
+      <Filter>Header Files\kht3d</Filter>
+    </ClInclude>
+    <ClInclude Include="kht3d_plane.h">
+      <Filter>Header Files\kht3d</Filter>
+    </ClInclude>
+    <ClInclude Include="kht3d_settings.h">
+      <Filter>Header Files\kht3d</Filter>
+    </ClInclude>
+    <ClInclude Include="common_includes.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

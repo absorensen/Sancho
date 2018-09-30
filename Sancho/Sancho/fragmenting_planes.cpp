@@ -1,3 +1,16 @@
+// TODO:
+// port octrees
+// fix the visualization of the octrees
+// verify and visualize octrees
+// port kernel estimation
+// verify kernel estimation
+// port voting
+// verify voting
+// port sorting accumulator cells
+// verify sorting accumulator cells
+// port peak detection
+// verify peak detection
+
 #include "fragmenting_planes.h"
 
 fragmenting_planes::fragmenting_planes() {
@@ -20,18 +33,24 @@ void fragmenting_planes::run() {
 // currently based around modified 3DKHT
 void fragmenting_planes::detection() {
 	// clustering
+	// =======================
+	
+	// how to create and cluster an octree?
 
 
 	// kernel estimation
-
+	// =======================
 
 	// voting
+	// =======================
 
 
 	// sorting accumulator cells
-
+	// =======================
 
 	// peak detection
+	// =======================
+
 
 }
 
