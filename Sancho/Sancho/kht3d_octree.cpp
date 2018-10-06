@@ -2,139 +2,139 @@
 
 kht3d_octree::kht3d_octree()
 {
-	//m_children = NULL;
-	//coplanar = false;
-	//m_centroid = Eigen::Vector4d(0.0, 0.0, 0.0, 0.0);
-	//color = Eigen::Vector4d(0.5, 0.5, 0.5, 1.0);
-	//variance1 = variance2 = variance3 = 0.0;
-	//votes = 0;
+	m_children = NULL;
+	coplanar = false;
+	m_centroid = Eigen::Vector4d(0.0, 0.0, 0.0, 0.0);
+	color = Eigen::Vector4d(0.5, 0.5, 0.5, 1.0);
+	variance1 = variance2 = variance3 = 0.0;
+	votes = 0;
 }
 
 
 void kht3d_octree::clear()
 {
-	//if (m_children != NULL)
-	//{
-	//	for (short i = 0; i < 8; i++)
-	//	{
-	//		m_children[i].m_indexes.clear();
-	//		m_children[i].clear();
-	//	}
-	//	delete[] m_children;
-	//	m_children = NULL;
-	//}
-	//m_children = NULL;
+	if (m_children != NULL)
+	{
+		for (short i = 0; i < 8; i++)
+		{
+			m_children[i].m_indexes.clear();
+			m_children[i].clear();
+		}
+		delete[] m_children;
+		m_children = NULL;
+	}
+	m_children = NULL;
 }
 
 void kht3d_octree::subdivide(kht3d_settings &settings)
 {
 
-//	// s_ms verification
-//	if (m_indexes.size() < (unsigned int)settings.s_ms) return;
-//
-//	// s_level verification
-//	if (m_level >= settings.s_level)
-//	{
-//		// principal component analysis
-//		least_variance_direction();
-//
-//		// Planarity verification
-//		double thickness = variance1 / variance2;
-//		double isotropy = variance2 / variance3;
-//		if (thickness < settings.max_thickness && isotropy > settings.min_isotropy) {
-//
-//			// Refitting step
-//			remove_outliers();
-//			least_variance_direction();
-//
-//			coplanar = true;
-//			return;
-//		}
-//	}
-//
-//	m_children = new kht3d_octree[8];
-//	double newsize = m_size / 2.0;
-//	for (int i = 0; i < 8; i++) {
-//		m_children[i].m_size = newsize;
-//		m_children[i].m_level = m_level + 1;
-//		m_children[i].m_root = m_root;
-//		m_children[i].m_indexes.reserve(m_indexes.size() / 4);
-//	}
-//
-//	double size4 = m_size / 4.0;
-//
-//	// Calculation of son nodes
-//	m_children[0].m_middle(0) = m_middle(0) - size4;
-//	m_children[1].m_middle(0) = m_middle(0) - size4;
-//	m_children[2].m_middle(0) = m_middle(0) - size4;
-//	m_children[3].m_middle(0) = m_middle(0) - size4;
-//	m_children[4].m_middle(0) = m_middle(0) + size4;
-//	m_children[5].m_middle(0) = m_middle(0) + size4;
-//	m_children[6].m_middle(0) = m_middle(0) + size4;
-//	m_children[7].m_middle(0) = m_middle(0) + size4;
-//
-//	m_children[0].m_middle(1) = m_middle(1) - size4;
-//	m_children[1].m_middle(1) = m_middle(1) - size4;
-//	m_children[2].m_middle(1) = m_middle(1) + size4;
-//	m_children[3].m_middle(1) = m_middle(1) + size4;
-//	m_children[4].m_middle(1) = m_middle(1) - size4;
-//	m_children[5].m_middle(1) = m_middle(1) - size4;
-//	m_children[6].m_middle(1) = m_middle(1) + size4;
-//	m_children[7].m_middle(1) = m_middle(1) + size4;
-//	
-//	m_children[0].m_middle(2) = m_middle(2) - size4;
-//	m_children[1].m_middle(2) = m_middle(2) + size4;
-//	m_children[2].m_middle(2) = m_middle(2) - size4;
-//	m_children[3].m_middle(2) = m_middle(2) + size4;
-//	m_children[4].m_middle(2) = m_middle(2) - size4;
-//	m_children[5].m_middle(2) = m_middle(2) + size4;
-//	m_children[6].m_middle(2) = m_middle(2) - size4;
-//	m_children[7].m_middle(2) = m_middle(2) + size4;
-//
-//	// putting points in its respective children
-//	for (unsigned int i = 0; i < m_indexes.size(); i++)
-//	{
-//		unsigned int index = 0;
-//		if (m_root->m_points[m_indexes[i]](0) > m_middle(0))
-//		{
-//			index += 4;
-//		}
-//		if (m_root->m_points[m_indexes[i]](1) > m_middle(1))
-//		{
-//			index += 2;
-//		}
-//		if (m_root->m_points[m_indexes[i]](2) > m_middle(2))
-//		{
-//			index += 1;
-//		}
-//		m_children[index].m_indexes.push_back(m_indexes[i]);
-//		// Calculating centroid distribution (divided by the number of points below)
-//		m_children[index].m_centroid += m_root->m_points[m_indexes[i]];
-//	}
-//
-//#pragma omp parallel for 
-//	for (int i = 0; i < 8; i++) {
-//		m_children[i].m_centroid /= m_children[i].m_indexes.size();
-//
-//		// Recursive subdivision 
-//		m_children[i].subdivide(settings);
-//	}
+	// s_ms verification
+	if (m_indexes.size() < (unsigned int)settings.s_ms) return;
+
+	// s_level verification
+	if (m_level >= settings.s_level)
+	{
+		// principal component analysis
+		least_variance_direction();
+
+		// Planarity verification
+		double thickness = variance1 / variance2;
+		double isotropy = variance2 / variance3;
+		if (thickness < settings.max_thickness && isotropy > settings.min_isotropy) {
+
+			// Refitting step
+			remove_outliers();
+			least_variance_direction();
+
+			coplanar = true;
+			return;
+		}
+	}
+
+	m_children = new kht3d_octree[8];
+	double newsize = m_size / 2.0;
+	for (int i = 0; i < 8; i++) {
+		m_children[i].m_size = newsize;
+		m_children[i].m_level = m_level + 1;
+		m_children[i].m_root = m_root;
+		m_children[i].m_indexes.reserve(m_indexes.size() / 4);
+	}
+
+	double size4 = m_size / 4.0;
+
+	// Calculation of son nodes
+	m_children[0].m_middle(0) = m_middle(0) - size4;
+	m_children[1].m_middle(0) = m_middle(0) - size4;
+	m_children[2].m_middle(0) = m_middle(0) - size4;
+	m_children[3].m_middle(0) = m_middle(0) - size4;
+	m_children[4].m_middle(0) = m_middle(0) + size4;
+	m_children[5].m_middle(0) = m_middle(0) + size4;
+	m_children[6].m_middle(0) = m_middle(0) + size4;
+	m_children[7].m_middle(0) = m_middle(0) + size4;
+
+	m_children[0].m_middle(1) = m_middle(1) - size4;
+	m_children[1].m_middle(1) = m_middle(1) - size4;
+	m_children[2].m_middle(1) = m_middle(1) + size4;
+	m_children[3].m_middle(1) = m_middle(1) + size4;
+	m_children[4].m_middle(1) = m_middle(1) - size4;
+	m_children[5].m_middle(1) = m_middle(1) - size4;
+	m_children[6].m_middle(1) = m_middle(1) + size4;
+	m_children[7].m_middle(1) = m_middle(1) + size4;
+	
+	m_children[0].m_middle(2) = m_middle(2) - size4;
+	m_children[1].m_middle(2) = m_middle(2) + size4;
+	m_children[2].m_middle(2) = m_middle(2) - size4;
+	m_children[3].m_middle(2) = m_middle(2) + size4;
+	m_children[4].m_middle(2) = m_middle(2) - size4;
+	m_children[5].m_middle(2) = m_middle(2) + size4;
+	m_children[6].m_middle(2) = m_middle(2) - size4;
+	m_children[7].m_middle(2) = m_middle(2) + size4;
+
+	// putting points in its respective children
+	for (unsigned int i = 0; i < m_indexes.size(); i++)
+	{
+		unsigned int index = 0;
+		if (m_root->m_points[m_indexes[i]](0) > m_middle(0))
+		{
+			index += 4;
+		}
+		if (m_root->m_points[m_indexes[i]](1) > m_middle(1))
+		{
+			index += 2;
+		}
+		if (m_root->m_points[m_indexes[i]](2) > m_middle(2))
+		{
+			index += 1;
+		}
+		m_children[index].m_indexes.push_back(m_indexes[i]);
+		// Calculating centroid distribution (divided by the number of points below)
+		m_children[index].m_centroid += m_root->m_points[m_indexes[i]];
+	}
+
+#pragma omp parallel for 
+	for (int i = 0; i < 8; i++) {
+		m_children[i].m_centroid /= m_children[i].m_indexes.size();
+
+		// Recursive subdivision 
+		m_children[i].subdivide(settings);
+	}
 }
 
 void kht3d_octree::remove_outliers()
 {
-	//Eigen::VectorXd centroid;
-	//for (int i = m_indexes.size() - 1; i >= 0; i--)
-	//{
-	//	if (distance2plane(m_root->m_points[m_indexes[i]]) > m_size / 10.0) {
-	//		m_indexes.erase(m_indexes.begin() + i);
-	//	}
-	//	else {
-	//		centroid += m_root->m_points[m_indexes[i]];
-	//	}
-	//}
-	//if (m_indexes.size() > 0)
-	//	m_centroid = centroid / m_indexes.size();
+	Eigen::VectorXd centroid;
+	for (int i = m_indexes.size() - 1; i >= 0; i--)
+	{
+		if (distance2plane(m_root->m_points[m_indexes[i]]) > m_size / 10.0) {
+			m_indexes.erase(m_indexes.begin() + i);
+		}
+		else {
+			centroid += m_root->m_points[m_indexes[i]];
+		}
+	}
+	if (m_indexes.size() > 0)
+		m_centroid = centroid / m_indexes.size();
 }
 
 Eigen::Matrix < double, 3, 3> kht3d_octree::fast_covariance_matrix()
@@ -143,7 +143,7 @@ Eigen::Matrix < double, 3, 3> kht3d_octree::fast_covariance_matrix()
 	double nvertsd = (double)(nverts);
 	Eigen::Matrix<double, 3, 3> covariance(3, 3);
 
-/*
+
 	covariance(0, 0) = 0.0;
 	for (size_t k = 0; k < nverts; k++)
 		covariance(0, 0) += (m_root->m_points[m_indexes[k]][0] - m_centroid[0]) * (m_root->m_points[m_indexes[k]][0] - m_centroid[0]);
@@ -189,7 +189,7 @@ Eigen::Matrix < double, 3, 3> kht3d_octree::fast_covariance_matrix()
 	covariance(0, 2) = covariance(2, 0);
 	covariance(0, 1) = covariance(1, 0);
 	covariance(1, 2) = covariance(2, 1);
-*/
+
 	return covariance;
 }
 
@@ -266,62 +266,66 @@ void kht3d_octree::print_points()
 
 void kht3d_octree::show(bool type, int height)
 {
-	//height--;
-	//if (height == 0) {
-	//	glColor3dv(color.data());
-	//	if (type) {
-	//		glPushMatrix();
-	//		glTranslated(m_middle(0), m_middle(1), m_middle(2));
-	//		if (color == Eigen::Vector4d(0.5, 0.5, 0.5, 1.0)) {
-	//			glutWireCube(m_size);
-	//		}
-	//		else {
-	//			glutSolidCube(m_size);
-	//		}
-	//		glPopMatrix();
-	//	}
-	//	else {
-	//		print_points();
-	//	}
-	//}
-	//if (m_children != NULL)
-	//{
-	//	for (short i = 0; i < 8; i++)
-	//	{
-	//		m_children[i].show(type, height);
-	//	}
-	//}
+	height--;
+	if (height == 0) {
+		glColor3dv(color.data());
+		if (type) {
+			glPushMatrix();
+			glTranslated(m_middle(0), m_middle(1), m_middle(2));
+			if (color == Eigen::Vector4d(0.5, 0.5, 0.5, 1.0)) {
+				// TODO: SOLVE THIS
+				//glutWireCube(m_size);
+			}
+			else {
+				// TODO: SOLVE THIS
+				//glutSolidCube(m_size);
+			}
+			glPopMatrix();
+		}
+		else {
+			print_points();
+		}
+	}
+	if (m_children != NULL)
+	{
+		for (short i = 0; i < 8; i++)
+		{
+			m_children[i].show(type, height);
+		}
+	}
 }
 
 void kht3d_octree::show(bool type)
 {
-	//if (coplanar) {
-	//	glColor3dv(color.data());
-	//	if (type) {
-	//		glPushMatrix();
-	//		glTranslated(m_middle(0), m_middle(1), m_middle(2));
+	if (coplanar) {
+		glColor3dv(color.data());
+		if (type) {
+			glPushMatrix();
+			glTranslated(m_middle(0), m_middle(1), m_middle(2));
 
-	//		glutWireCube(m_size);
-	//		/*if (color != Vector4d(0.5,0.5,0.5))
-	//		glutWireCube(m_size);
-	//		else {
-	//		glutSolidCube(m_size);
-	//		}*/
+			// TODO: SOLVE THIS
+			//glutWireCube(m_size);
+
+			/*if (color != Vector4d(0.5,0.5,0.5))
+			glutWireCube(m_size);
+			else {
+			glutSolidCube(m_size);
+			}*/
 
 
-	//		//glutSolidCube(m_size);
-	//		glPopMatrix();
-	//	}
-	//	else {
-	//		print_points();
-	//	}
-	//}
+			//glutSolidCube(m_size);
+			glPopMatrix();
+		}
+		else {
+			print_points();
+		}
+	}
 
-	//if (m_children != NULL)
-	//{
-	//	for (short i = 0; i < 8; i++)
-	//	{
-	//		m_children[i].show(type);
-	//	}
-	//}
+	if (m_children != NULL)
+	{
+		for (short i = 0; i < 8; i++)
+		{
+			m_children[i].show(type);
+		}
+	}
 }

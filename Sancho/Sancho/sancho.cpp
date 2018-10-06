@@ -8,6 +8,7 @@ const float Z_FAR = 100.0f;
 const float ASPECT_RATIO = ((float)SCR_WIDTH) / SCR_HEIGHT;
 static const float SCALE = 1.0f / static_cast<float>(SCR_WIDTH);
 static const float PI = 3.14159265359f;
+float _point_size = 0.01f;
 
 // camera
 //Camera camera(-2.0f, 1.5f, 3.4f, 0.0f, 1.0f, 0.0f, -50.0f, -12.0f);
@@ -63,7 +64,7 @@ int main(int argc, char * argv[]) {
 	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
 	PointCloud point_cloud;
-	load_point_cloud("../test.txt", 4, 3, point_cloud);
+	load_point_cloud("../stan.txt", 2503, 3, point_cloud);
 
 	Shader point_cloud_shader("point_cloud.vert","point_cloud.frag");
 
@@ -89,7 +90,7 @@ int main(int argc, char * argv[]) {
 
 	point_cloud_shader.use();
 	point_cloud_shader.setVec3("color", 0.9f, 0.4f, 0.0f);
-	point_cloud_shader.setFloat("point_size", 0.3f);
+	point_cloud_shader.setFloat("point_size", _point_size);
 	point_cloud_shader.setFloat("z_near", Z_NEAR);
 	point_cloud_shader.setFloat("z_far", Z_FAR);
 	point_cloud_shader.setFloat("height_of_near_plane", height_of_near_plane);
@@ -114,6 +115,7 @@ int main(int argc, char * argv[]) {
 		point_cloud_shader.use();
 		point_cloud_shader.setMat4("mvp_matrix", MVPmatrix);
 		point_cloud_shader.setVec3("cam_pos", camera.Position);
+		point_cloud_shader.setFloat("point_size", _point_size);
 
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_POINTS, 0, point_cloud.no_of_points);
@@ -151,19 +153,19 @@ void process_input(GLFWwindow* window) {
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-			camera.ProcessKeyboard(FORWARD, deltaTimeMod);
+		camera.ProcessKeyboard(FORWARD, deltaTimeMod);
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
-			camera.ProcessKeyboard(BACKWARD, deltaTimeMod);
+		camera.ProcessKeyboard(BACKWARD, deltaTimeMod);
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-			camera.ProcessKeyboard(LEFT, deltaTimeMod);
+		camera.ProcessKeyboard(LEFT, deltaTimeMod);
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-			camera.ProcessKeyboard(RIGHT, deltaTimeMod);
+		camera.ProcessKeyboard(RIGHT, deltaTimeMod);
 	}
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 	{
@@ -172,6 +174,14 @@ void process_input(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
 	{
 		camera.ProcessKeyboard(DOWN, deltaTimeMod);
+	}
+	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
+	{
+		_point_size -= 0.00001f;
+	}
+	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
+	{
+		_point_size += 0.00001f;
 	}
 
 }
