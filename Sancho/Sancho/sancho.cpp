@@ -60,6 +60,7 @@ int main(int argc, char * argv[]) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_POINT_SMOOTH);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glDepthFunc(GL_LESS);
 	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
@@ -95,8 +96,19 @@ int main(int argc, char * argv[]) {
 	point_cloud_shader.setFloat("z_far", Z_FAR);
 	point_cloud_shader.setFloat("height_of_near_plane", height_of_near_plane);
 
-	Timer t, totalTime;
 
+	// Real-Time Point Cloud Compression begin
+	Octree tree;
+	Settings settings;
+	real_time_point_cloud_compression(point_cloud, tree, settings);
+
+
+
+
+	// Real-Time Point Cloud Compression end
+	
+	
+	Timer t, totalTime;
 	while (!glfwWindowShouldClose(window))
 	{
 		process_input(window);

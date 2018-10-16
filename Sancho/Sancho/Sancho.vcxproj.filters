@@ -16,17 +16,11 @@
     <Filter Include="Source Files\Shader Files">
       <UniqueIdentifier>{4d86fa67-13bf-4fe9-81cb-8044267acf93}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Fragmenting Planes">
-      <UniqueIdentifier>{71f3c985-c93f-445a-a0b8-057151db88fe}</UniqueIdentifier>
+    <Filter Include="Source Files\Real-Time Point Cloud Compression">
+      <UniqueIdentifier>{5eafe236-8627-4fa9-b8c6-93c9f5361b16}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Fragmenting Planes">
-      <UniqueIdentifier>{bdf2a6f2-3b4d-4370-83de-5f29d9771820}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\kht3d">
-      <UniqueIdentifier>{2116349f-aa9f-4ef6-b8b2-be184d78ba58}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\kht3d">
-      <UniqueIdentifier>{237b4a00-3a3d-4159-b45b-90487bcdf6c0}</UniqueIdentifier>
+    <Filter Include="Header Files\Real-Time Point Cloud Compression">
+      <UniqueIdentifier>{e95eb75f-4dc8-4456-8e4a-1ee471896f48}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -36,11 +30,11 @@
     <ClCompile Include="glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fragmenting_planes.cpp">
-      <Filter>Source Files\Fragmenting Planes</Filter>
+    <ClCompile Include="real_time_point_cloud_compression.cpp">
+      <Filter>Source Files\Real-Time Point Cloud Compression</Filter>
     </ClCompile>
-    <ClCompile Include="kht3d_octree.cpp">
-      <Filter>Source Files\kht3d</Filter>
+    <ClCompile Include="Octree.cpp">
+      <Filter>Source Files\Real-Time Point Cloud Compression</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -59,22 +53,22 @@
     <ClInclude Include="point_cloud_loader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="point_cloud.h">
+    <ClInclude Include="common_includes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="fragmenting_planes.h">
-      <Filter>Header Files\Fragmenting Planes</Filter>
+    <ClInclude Include="real_time_point_cloud_compression.h">
+      <Filter>Header Files\Real-Time Point Cloud Compression</Filter>
     </ClInclude>
-    <ClInclude Include="kht3d_octree.h">
-      <Filter>Header Files\kht3d</Filter>
+    <ClInclude Include="settings.h">
+      <Filter>Header Files\Real-Time Point Cloud Compression</Filter>
     </ClInclude>
-    <ClInclude Include="kht3d_plane.h">
-      <Filter>Header Files\kht3d</Filter>
+    <ClInclude Include="Plane.h">
+      <Filter>Header Files\Real-Time Point Cloud Compression</Filter>
     </ClInclude>
-    <ClInclude Include="kht3d_settings.h">
-      <Filter>Header Files\kht3d</Filter>
+    <ClInclude Include="Octree.h">
+      <Filter>Header Files\Real-Time Point Cloud Compression</Filter>
     </ClInclude>
-    <ClInclude Include="common_includes.h">
+    <ClInclude Include="PointCloud.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

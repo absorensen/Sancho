@@ -5,9 +5,9 @@
 // project files
 #include "camera.h"
 #include "shader.h"
-#include "os_timer.h"
 #include "point_cloud_loader.h"
-#include "point_cloud.h"
+#include "PointCloud.h"
+#include "real_time_point_cloud_compression.h"
 
 // function declarations
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);

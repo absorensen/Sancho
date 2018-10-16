@@ -8,17 +8,17 @@
 
 #include <string>
 
-class kht3d_settings {
+class Settings {
 public:
 
-	kht3d_settings()
+	Settings()
 	{
 		// Accumulator discretization
 		phi_num = 30;
 		rho_num = 300;
 
 		// Percentage of the number of points from the point cloud to stop subdividing
-		s_ps = 0.002;
+		s_ps = 0.002f;
 
 		// relative tolerances associated with plane thickness (s_alpha) and plane isotropy (s_beta)
 		max_thickness = 1.0f / 25.0f;
@@ -52,7 +52,7 @@ public:
 		/**/
 		s_level = 6;
 		file = "../pointclouds/Museum.txt";
-		max_distance2plane = 0.3;
+		max_distance2plane = 0.3f;
 		/**/
 
 		// 6 planes
@@ -80,7 +80,7 @@ public:
 	int s_ms;
 	float s_ps;
 
-	float max_point_distance;
+	double max_point_distance;
 	float max_distance2plane;
 
 	float max_thickness;

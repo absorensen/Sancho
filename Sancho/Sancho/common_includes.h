@@ -14,3 +14,15 @@
 #include <omp.h>
 #include <vector>
 #include <Windows.h>
+#include <algorithm>
+
+// local files
+#include "os_timer.h"
+
+//void DrawWireCube(double size) {
+//
+//}
+//
+//void DrawSolidCube(double size) {
+//
+//}

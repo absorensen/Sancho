@@ -1,15 +1,15 @@
 #pragma once
 
 #include "common_includes.h"
-#include "kht3d_octree.h"
+#include "Octree.h"
 
-class kht3d_octree;
+class Octree;
 
-class kht3d_plane {
+class Plane {
 public:
 
-	kht3d_plane(void) {}
-	~kht3d_plane(void) {}
+	Plane(void) {}
+	~Plane(void) {}
 
 	inline void calculate()
 	{
@@ -51,7 +51,7 @@ public:
 
 	}
 
-	inline bool operator < (kht3d_plane p) { return (representativeness > p.representativeness); }
+	inline bool operator < (Plane p) { return (representativeness > p.representativeness); }
 
 	inline void draw(double size, bool type, bool pc, bool selected)
 	{
@@ -67,7 +67,7 @@ public:
 
 		if (pc) {
 			if (type) {
-				for (kht3d_octree *node : nodes)
+				for (Octree *node : nodes)
 				{
 					glPushMatrix();
 					glTranslated(node->m_middle.x, node->m_middle.y, node->m_middle.z);
@@ -76,7 +76,7 @@ public:
 				}
 			}
 			else {
-				for (kht3d_octree *node : nodes)
+				for (Octree *node : nodes)
 				{
 					glBegin(GL_POINTS);
 					for (size_t i = 0; i < node->m_indexes.size(); i++)
@@ -138,7 +138,7 @@ public:
 	int pi, ri;
 	bool m_showing;
 
-	std::vector<kht3d_octree*> nodes;
+	std::vector<Octree*> nodes;
 	ACCUM_BIN_TYPE votes;
 	double representativeness;
 

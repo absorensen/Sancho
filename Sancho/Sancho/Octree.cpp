@@ -1,17 +1,22 @@
-#include "kht3d_octree.h"
+#pragma once
 
-kht3d_octree::kht3d_octree()
+// based on the 3DKHT octree implementation
+// http://www.inf.ufrgs.br/~oliveira/pubs_files/HT3D/HT3D_page.html
+
+#include "Octree.h"
+
+Octree::Octree()
 {
-	m_children = NULL;
-	coplanar = false;
 	m_centroid = Eigen::Vector4d(0.0, 0.0, 0.0, 0.0);
 	color = Eigen::Vector4d(0.5, 0.5, 0.5, 1.0);
+	m_children = NULL;
+	coplanar = false;
 	variance1 = variance2 = variance3 = 0.0;
 	votes = 0;
 }
 
 
-void kht3d_octree::clear()
+void Octree::clear()
 {
 	if (m_children != NULL)
 	{
@@ -26,7 +31,7 @@ void kht3d_octree::clear()
 	m_children = NULL;
 }
 
-void kht3d_octree::subdivide(kht3d_settings &settings)
+void Octree::subdivide(Settings &settings)
 {
 
 	// s_ms verification
@@ -52,7 +57,7 @@ void kht3d_octree::subdivide(kht3d_settings &settings)
 		}
 	}
 
-	m_children = new kht3d_octree[8];
+	m_children = new Octree[8];
 	double newsize = m_size / 2.0;
 	for (int i = 0; i < 8; i++) {
 		m_children[i].m_size = newsize;
@@ -121,9 +126,9 @@ void kht3d_octree::subdivide(kht3d_settings &settings)
 	}
 }
 
-void kht3d_octree::remove_outliers()
+void Octree::remove_outliers()
 {
-	Eigen::VectorXd centroid;
+	Eigen::Vector4d centroid;
 	for (int i = m_indexes.size() - 1; i >= 0; i--)
 	{
 		if (distance2plane(m_root->m_points[m_indexes[i]]) > m_size / 10.0) {
@@ -137,7 +142,7 @@ void kht3d_octree::remove_outliers()
 		m_centroid = centroid / m_indexes.size();
 }
 
-Eigen::Matrix < double, 3, 3> kht3d_octree::fast_covariance_matrix()
+Eigen::Matrix < double, 3, 3> Octree::fast_covariance_matrix()
 {
 	unsigned int nverts = m_indexes.size();
 	double nvertsd = (double)(nverts);
@@ -193,7 +198,7 @@ Eigen::Matrix < double, 3, 3> kht3d_octree::fast_covariance_matrix()
 	return covariance;
 }
 
-void kht3d_octree::least_variance_direction()
+void Octree::least_variance_direction()
 {
 	m_covariance = fast_covariance_matrix();
 
@@ -224,17 +229,17 @@ void kht3d_octree::least_variance_direction()
 
 	Eigen::Matrix3d eigenvectors_matrix = eigenvalue_decomp.pseudoEigenvectors();
 
-	normal1 = Eigen::Vector3d(eigenvectors_matrix(0, min_index), eigenvectors_matrix(1, min_index), eigenvectors_matrix(2, min_index));
-	normal2 = Eigen::Vector3d(eigenvectors_matrix(0, middle_index), eigenvectors_matrix(1, middle_index), eigenvectors_matrix(2, middle_index));
-	normal3 = Eigen::Vector3d(eigenvectors_matrix(0, max_index), eigenvectors_matrix(1, max_index), eigenvectors_matrix(2, max_index));
+	normal1 = Eigen::Vector4d(eigenvectors_matrix(0, min_index), eigenvectors_matrix(1, min_index), eigenvectors_matrix(2, min_index), 1.0);
+	normal2 = Eigen::Vector4d(eigenvectors_matrix(0, middle_index), eigenvectors_matrix(1, middle_index), eigenvectors_matrix(2, middle_index), 1.0);
+	normal3 = Eigen::Vector4d(eigenvectors_matrix(0, max_index), eigenvectors_matrix(1, max_index), eigenvectors_matrix(2, max_index), 1.0);
 }
 
-double kht3d_octree::distance2plane(Eigen::VectorXd &point)
+double Octree::distance2plane(Eigen::Vector4d &point)
 {
 	return abs((point - m_centroid).dot(normal1.normalized()));
 }
 
-void kht3d_octree::get_nodes(std::vector< kht3d_octree*> &nodes)
+void Octree::get_nodes(std::vector< Octree*> &nodes)
 {
 	if (m_children != NULL)
 	{
@@ -250,7 +255,7 @@ void kht3d_octree::get_nodes(std::vector< kht3d_octree*> &nodes)
 	}
 }
 
-void kht3d_octree::print_points()
+void Octree::print_points()
 {
 	glPointSize(4.0);
 	glBegin(GL_POINTS);
@@ -264,7 +269,7 @@ void kht3d_octree::print_points()
 	glPointSize(1.0);
 }
 
-void kht3d_octree::show(bool type, int height)
+void Octree::show(bool type, int height)
 {
 	height--;
 	if (height == 0) {
@@ -273,12 +278,12 @@ void kht3d_octree::show(bool type, int height)
 			glPushMatrix();
 			glTranslated(m_middle(0), m_middle(1), m_middle(2));
 			if (color == Eigen::Vector4d(0.5, 0.5, 0.5, 1.0)) {
-				// TODO: SOLVE THIS
-				//glutWireCube(m_size);
+				// wire
+				draw_cube(m_middle, m_size, false);
 			}
 			else {
-				// TODO: SOLVE THIS
-				//glutSolidCube(m_size);
+				// solid
+				draw_cube(m_middle, m_size);
 			}
 			glPopMatrix();
 		}
@@ -295,7 +300,7 @@ void kht3d_octree::show(bool type, int height)
 	}
 }
 
-void kht3d_octree::show(bool type)
+void Octree::show(bool type)
 {
 	if (coplanar) {
 		glColor3dv(color.data());
@@ -303,17 +308,9 @@ void kht3d_octree::show(bool type)
 			glPushMatrix();
 			glTranslated(m_middle(0), m_middle(1), m_middle(2));
 
-			// TODO: SOLVE THIS
-			//glutWireCube(m_size);
+			// wire
+			draw_cube(m_middle, m_size, false);
 
-			/*if (color != Vector4d(0.5,0.5,0.5))
-			glutWireCube(m_size);
-			else {
-			glutSolidCube(m_size);
-			}*/
-
-
-			//glutSolidCube(m_size);
 			glPopMatrix();
 		}
 		else {
@@ -328,4 +325,77 @@ void kht3d_octree::show(bool type)
 			m_children[i].show(type);
 		}
 	}
+}
+
+
+// needs to be tested for solid draw first and then for wire draw
+void Octree::draw_cube(Eigen::Vector4d &middle, double size, bool solid) {
+	// initialize (if necessary)
+	if (cubeVAO == 0)
+	{
+		float vertices[] = {
+			// back face
+			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+			 1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+			 1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // bottom-right         
+			 1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+			-1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
+			// front face
+			-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+			 1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
+			 1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+			 1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+			-1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
+			-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+			// left face
+			-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+			-1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
+			-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+			-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+			-1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+			-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+			// right face
+			 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+			 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+			 1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right         
+			 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+			 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+			 1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left     
+			// bottom face
+			-1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+			 1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
+			 1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+			 1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+			-1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+			-1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+			// top face
+			-1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+			 1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+			 1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // top-right     
+			 1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+			-1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+			-1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left        
+		};
+		glGenVertexArrays(1, &cubeVAO);
+		glGenBuffers(1, &cubeVBO);
+		// fill buffer
+		glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		// link vertex attributes
+		glBindVertexArray(cubeVAO);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	}
+	// render Cube
+	glBindVertexArray(cubeVAO);
+	// should be solid/wire switch
+	if (true) glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
 }
