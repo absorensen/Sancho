@@ -8,9 +8,12 @@ const float Z_FAR = 10000.0f;
 const float ASPECT_RATIO = ((float)SCR_WIDTH) / SCR_HEIGHT;
 static const float SCALE = 1.0f / static_cast<float>(SCR_WIDTH);
 static const float PI = 3.14159265359f;
+static const double key_press_threshold = 0.25;
 float _point_size = 0.01f;
 bool octree_show_all_levels = false;
 int octree_show_level = 0;
+double time_since_last_frame = 0.0;
+
 
 // camera
 //Camera camera(-2.0f, 1.5f, 3.4f, 0.0f, 1.0f, 0.0f, -50.0f, -12.0f);
@@ -145,8 +148,6 @@ int main(int argc, char * argv[]) {
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_POINTS, 0, point_cloud.no_of_points);
 
-		//draw_cube(middle, 10.0f, true);
-
 		if(octree_show_all_levels) tree.show();
 		else tree.show(octree_show_level);
 		
@@ -171,6 +172,7 @@ void process_input(GLFWwindow* window) {
 		glfwSetWindowShouldClose(window, true);
 		return;
 	}
+	double timeDifference = glfwGetTime() - time_since_last_frame;
 
 	deltaTimeMod = deltaTime;
 	
@@ -213,17 +215,22 @@ void process_input(GLFWwindow* window) {
 	{
 		_point_size += 0.01f * deltaTimeMod;
 	}
-	if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
+	if (timeDifference > key_press_threshold && glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
 	{
 		octree_show_all_levels = !octree_show_all_levels;
+		time_since_last_frame = glfwGetTime();
 	}
-	if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
+	if (timeDifference > key_press_threshold && glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
 	{
 		++octree_show_level;
+		std::cout << "Showing octree level: " << octree_show_level << std::endl;
+		time_since_last_frame = glfwGetTime();
 	}
-	if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS)
+	if (timeDifference > key_press_threshold && glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS)
 	{
 		--octree_show_level;
+		std::cout << "Showing octree level: " << octree_show_level << std::endl;
+		time_since_last_frame = glfwGetTime();
 	}
 }
 

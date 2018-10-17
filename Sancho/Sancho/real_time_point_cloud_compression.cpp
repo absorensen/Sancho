@@ -19,26 +19,26 @@ void real_time_point_cloud_compression(PointCloud& points, Octree& tree, Setting
 	t.stop();
 	std::cout << "Subdividing octree: " << t.get_time() << "ms" << std::endl;
 
-	// show
-	std::cout << "Tree contains: " << std::endl;
-	std::cout << "ROOT" << std::endl;
-	std::cout << "Centroid: " << tree.m_centroid.data()[0] << " " << tree.m_centroid.data()[1] << " " << tree.m_centroid.data()[2] << std::endl;
-	std::cout << "Levels: " << tree.m_level << std::endl;
-	std::cout << "Middle: " << tree.m_middle.data()[0] << " " << tree.m_middle.data()[1] << " " << tree.m_middle.data()[2] << std::endl;
-	std::cout << "Size: " << tree.m_size << std::endl;
-	std::cout << std::endl;
-	std::cout << "CHILD 1" << std::endl;
-	std::cout << "Centroid: " << tree.m_children[0].m_centroid.data()[0] << " " << tree.m_children[0].m_centroid.data()[1] << " " << tree.m_children[0].m_centroid.data()[2] << std::endl;
-	std::cout << "Levels: " << tree.m_children[0].m_level << std::endl;
-	std::cout << "Middle: " << tree.m_children[0].m_middle.data()[0] << " " << tree.m_children[0].m_middle.data()[1] << " " << tree.m_children[0].m_middle.data()[2] << std::endl;
-	std::cout << "Size: " << tree.m_children[0].m_size << std::endl;
-	std::cout << std::endl;
-	std::cout << "CHILD 1 OF CHILD 1" << std::endl;
-	std::cout << "Centroid: " << tree.m_children[0].m_children[0].m_centroid.data()[0] << " " << tree.m_children[0].m_children[0].m_centroid.data()[1] << " " << tree.m_children[0].m_children[0].m_centroid.data()[2] << std::endl;
-	std::cout << "Levels: " << tree.m_children[0].m_children[0].m_level << std::endl;
-	std::cout << "Middle: " << tree.m_children[0].m_children[0].m_middle.data()[0] << " " << tree.m_children[0].m_children[0].m_middle.data()[1] << " " << tree.m_children[0].m_children[0].m_middle.data()[2] << std::endl;
-	std::cout << "Size: " << tree.m_children[0].m_children[0].m_size << std::endl;
-	std::cout << std::endl;
+	//// show
+	//std::cout << "Tree contains: " << std::endl;
+	//std::cout << "ROOT" << std::endl;
+	//std::cout << "Centroid: " << tree.m_centroid.data()[0] << " " << tree.m_centroid.data()[1] << " " << tree.m_centroid.data()[2] << std::endl;
+	//std::cout << "Levels: " << tree.m_level << std::endl;
+	//std::cout << "Middle: " << tree.m_middle.data()[0] << " " << tree.m_middle.data()[1] << " " << tree.m_middle.data()[2] << std::endl;
+	//std::cout << "Size: " << tree.m_size << std::endl;
+	//std::cout << std::endl;
+	//std::cout << "CHILD 1" << std::endl;
+	//std::cout << "Centroid: " << tree.m_children[0].m_centroid.data()[0] << " " << tree.m_children[0].m_centroid.data()[1] << " " << tree.m_children[0].m_centroid.data()[2] << std::endl;
+	//std::cout << "Levels: " << tree.m_children[0].m_level << std::endl;
+	//std::cout << "Middle: " << tree.m_children[0].m_middle.data()[0] << " " << tree.m_children[0].m_middle.data()[1] << " " << tree.m_children[0].m_middle.data()[2] << std::endl;
+	//std::cout << "Size: " << tree.m_children[0].m_size << std::endl;
+	//std::cout << std::endl;
+	//std::cout << "CHILD 1 OF CHILD 1" << std::endl;
+	//std::cout << "Centroid: " << tree.m_children[0].m_children[0].m_centroid.data()[0] << " " << tree.m_children[0].m_children[0].m_centroid.data()[1] << " " << tree.m_children[0].m_children[0].m_centroid.data()[2] << std::endl;
+	//std::cout << "Levels: " << tree.m_children[0].m_children[0].m_level << std::endl;
+	//std::cout << "Middle: " << tree.m_children[0].m_children[0].m_middle.data()[0] << " " << tree.m_children[0].m_children[0].m_middle.data()[1] << " " << tree.m_children[0].m_children[0].m_middle.data()[2] << std::endl;
+	//std::cout << "Size: " << tree.m_children[0].m_children[0].m_size << std::endl;
+	//std::cout << std::endl;
 
 }
 
