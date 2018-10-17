@@ -33,12 +33,13 @@ void Octree::clear()
 
 void Octree::subdivide(Settings &settings)
 {
-
+	_settings = &settings;
 	// s_ms verification
 	if (m_indexes.size() < (unsigned int)settings.s_ms) return;
 
 	// s_level verification
-	if (m_level >= settings.s_level)
+	if(false)
+	//if (m_level >= settings.s_level)
 	{
 		// principal component analysis
 		least_variance_direction();
@@ -269,70 +270,44 @@ void Octree::print_points()
 	glPointSize(1.0);
 }
 
-void Octree::show(bool type, int height)
+void Octree::show(int height)
 {
 	height--;
 	if (height == 0) {
-		glColor3dv(color.data());
-		if (type) {
-			glPushMatrix();
-			glTranslated(m_middle(0), m_middle(1), m_middle(2));
-			if (color == Eigen::Vector4d(0.5, 0.5, 0.5, 1.0)) {
-				// wire
-				draw_cube(m_middle, m_size, false);
-			}
-			else {
-				// solid
-				draw_cube(m_middle, m_size);
-			}
-			glPopMatrix();
-		}
-		else {
-			print_points();
-		}
+		draw_wire_cube(m_middle, float(m_size));
+		return;
 	}
 	if (m_children != NULL)
 	{
 		for (short i = 0; i < 8; i++)
 		{
-			m_children[i].show(type, height);
+			m_children[i].show(height);
 		}
 	}
 }
 
-void Octree::show(bool type)
+void Octree::show()
 {
-	if (coplanar) {
-		glColor3dv(color.data());
-		if (type) {
-			glPushMatrix();
-			glTranslated(m_middle(0), m_middle(1), m_middle(2));
-
-			// wire
-			draw_cube(m_middle, m_size, false);
-
-			glPopMatrix();
-		}
-		else {
-			print_points();
-		}
-	}
-
+	draw_wire_cube(m_middle, float(m_size));
 	if (m_children != NULL)
 	{
 		for (short i = 0; i < 8; i++)
 		{
-			m_children[i].show(type);
+			m_children[i].show();
 		}
 	}
 }
 
-
-// needs to be tested for solid draw first and then for wire draw
-void Octree::draw_cube(Eigen::Vector4d &middle, double size, bool solid) {
+void Octree::draw_solid_cube(Eigen::Vector4d &middle, float size) {
 	// initialize (if necessary)
-	if (cubeVAO == 0)
+	if (solidCubeVAO == 0)
 	{
+		_settings->cube_shader->use();
+		_settings->cube_shader->setVec3("color", 0.0f, 0.9f, 0.6f);
+		_settings->cube_shader->setFloat("point_size", _settings->point_size);
+		_settings->cube_shader->setFloat("z_near", _settings->Z_NEAR);
+		_settings->cube_shader->setFloat("z_far", _settings->Z_FAR);
+		_settings->cube_shader->setFloat("height_of_near_plane", _settings->height_of_near_plane);
 		float vertices[] = {
 			// back face
 			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
@@ -377,13 +352,13 @@ void Octree::draw_cube(Eigen::Vector4d &middle, double size, bool solid) {
 			-1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
 			-1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left        
 		};
-		glGenVertexArrays(1, &cubeVAO);
-		glGenBuffers(1, &cubeVBO);
+		glGenVertexArrays(1, &solidCubeVAO);
+		glGenBuffers(1, &solidCubeVBO);
 		// fill buffer
-		glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, solidCubeVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 		// link vertex attributes
-		glBindVertexArray(cubeVAO);
+		glBindVertexArray(solidCubeVAO);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(1);
@@ -393,9 +368,112 @@ void Octree::draw_cube(Eigen::Vector4d &middle, double size, bool solid) {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 	}
+
+	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), (float)_settings->SCR_WIDTH / (float)_settings->SCR_HEIGHT, _settings->Z_NEAR, _settings->Z_FAR);
+	glm::mat4 view = _settings->camera->GetViewMatrix();
+	glm::vec3 translate(float(middle.x()), float(middle.y()), float(middle.z()));
+	glm::mat4 model = glm::scale(glm::translate(glm::mat4(1.0f), translate), glm::vec3(size));
+	glm::mat4 MVPmatrix = projection * view * model;
+
+	_settings->cube_shader->use();
+	_settings->cube_shader->setMat4("mvp_matrix", MVPmatrix);
+	_settings->cube_shader->setVec3("cam_pos", _settings->camera->Position);
+	_settings->cube_shader->setFloat("point_size", _settings->point_size);
+
 	// render Cube
-	glBindVertexArray(cubeVAO);
+	glBindVertexArray(solidCubeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+}
+
+
+void Octree::draw_wire_cube(Eigen::Vector4d &middle, float size) {
+	// initialize (if necessary)
+	if (wireCubeVAO == 0)
+	{
+		_settings->cube_shader->use();
+		_settings->cube_shader->setVec3("color", 0.0f, 0.9f, 0.6f);
+		_settings->cube_shader->setFloat("point_size", _settings->point_size);
+		_settings->cube_shader->setFloat("z_near", _settings->Z_NEAR);
+		_settings->cube_shader->setFloat("z_far", _settings->Z_FAR);
+		_settings->cube_shader->setFloat("height_of_near_plane", _settings->height_of_near_plane);
+		float vertices[] = {
+			// back face
+			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+			 1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+			 1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // bottom-right         
+			 1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+			-1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
+			// front face
+			-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+			 1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
+			 1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+			 1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+			-1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
+			-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+			// left face
+			-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+			-1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
+			-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+			-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+			-1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+			-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+			// right face
+			 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+			 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+			 1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right         
+			 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+			 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+			 1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left     
+			// bottom face
+			-1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+			 1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
+			 1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+			 1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+			-1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+			-1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+			// top face
+			-1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+			 1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+			 1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // top-right     
+			 1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+			-1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+			-1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left        
+		};
+		glGenVertexArrays(1, &wireCubeVAO);
+		glGenBuffers(1, &wireCubeVBO);
+		// fill buffer
+		glBindBuffer(GL_ARRAY_BUFFER, wireCubeVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		// link vertex attributes
+		glBindVertexArray(wireCubeVAO);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	}
+
+	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), (float)_settings->SCR_WIDTH / (float)_settings->SCR_HEIGHT, _settings->Z_NEAR, _settings->Z_FAR);
+	glm::mat4 view = _settings->camera->GetViewMatrix();
+	glm::vec3 translate(float(middle.x()), float(middle.y()), float(middle.z()));
+	glm::mat4 model = glm::scale(glm::translate(glm::mat4(1.0f), translate), glm::vec3(size));
+	glm::mat4 MVPmatrix = projection * view * model;
+
+	_settings->cube_shader->use();
+	_settings->cube_shader->setMat4("mvp_matrix", MVPmatrix);
+	_settings->cube_shader->setVec3("cam_pos", _settings->camera->Position);
+	_settings->cube_shader->setFloat("point_size", _settings->point_size);
+
+	// render Cube
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glBindVertexArray(wireCubeVAO);
 	// should be solid/wire switch
-	if (true) glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glBindVertexArray(0);
 }

@@ -7,6 +7,8 @@
 #define EPS 1.E-3
 
 #include <string>
+#include "camera.h"
+#include "shader.h"
 
 class Settings {
 public:
@@ -85,6 +87,17 @@ public:
 
 	float max_thickness;
 	float min_isotropy;
+
+	float Z_NEAR;
+	float Z_FAR;
+	float SCR_WIDTH;
+	float SCR_HEIGHT;
+	float ASPECT_RATIO;
+	float point_size;
+	float height_of_near_plane;
+
+	Shader* cube_shader;
+	Camera* camera;
 
 	std::string file;
 	std::string extension;

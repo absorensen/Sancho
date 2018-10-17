@@ -4,11 +4,13 @@
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 800;
 const float Z_NEAR = 0.1f;
-const float Z_FAR = 100.0f;
+const float Z_FAR = 10000.0f;
 const float ASPECT_RATIO = ((float)SCR_WIDTH) / SCR_HEIGHT;
 static const float SCALE = 1.0f / static_cast<float>(SCR_WIDTH);
 static const float PI = 3.14159265359f;
 float _point_size = 0.01f;
+bool octree_show_all_levels = false;
+int octree_show_level = 0;
 
 // camera
 //Camera camera(-2.0f, 1.5f, 3.4f, 0.0f, 1.0f, 0.0f, -50.0f, -12.0f);
@@ -16,6 +18,7 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
+float height_of_near_plane;
 
 // timing
 double deltaTime = 0.0;
@@ -65,7 +68,8 @@ int main(int argc, char * argv[]) {
 	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
 	PointCloud point_cloud;
-	load_point_cloud("../stan.txt", 2503, 3, point_cloud);
+	//load_point_cloud("../stan.txt", 2503, 3, point_cloud);
+	load_point_cloud("../Room.txt", 831159, 3, point_cloud);
 
 	Shader point_cloud_shader("point_cloud.vert","point_cloud.frag");
 
@@ -86,7 +90,7 @@ int main(int argc, char * argv[]) {
 	float fovy = 60; // degrees
 	int viewport[4];
 	glGetIntegerv(GL_VIEWPORT, viewport);
-	float height_of_near_plane = (float)abs(viewport[3] - viewport[1]) /
+	height_of_near_plane = (float)abs(viewport[3] - viewport[1]) /
 		(2 * tan(0.5*fovy*PI / 180.0));
 
 	point_cloud_shader.use();
@@ -100,13 +104,22 @@ int main(int argc, char * argv[]) {
 	// Real-Time Point Cloud Compression begin
 	Octree tree;
 	Settings settings;
+	Shader cube_shader("point_cloud.vert", "point_cloud.frag");
+	settings.cube_shader = &cube_shader;
+	settings.Z_NEAR = 0.1f;
+	settings.Z_FAR = 10000.0f;
+	settings.point_size = _point_size;
+	settings.height_of_near_plane = height_of_near_plane;
+	settings.camera = &camera;
+	settings.ASPECT_RATIO = ASPECT_RATIO;
+	settings.SCR_HEIGHT = SCR_HEIGHT;
+	settings.SCR_WIDTH = SCR_WIDTH;
 	real_time_point_cloud_compression(point_cloud, tree, settings);
 
 
 
-
+	//Eigen::Vector4d middle(10.0, 12.0, -15.0, 1.0);
 	// Real-Time Point Cloud Compression end
-	
 	
 	Timer t, totalTime;
 	while (!glfwWindowShouldClose(window))
@@ -131,6 +144,11 @@ int main(int argc, char * argv[]) {
 
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_POINTS, 0, point_cloud.no_of_points);
+
+		//draw_cube(middle, 10.0f, true);
+
+		if(octree_show_all_levels) tree.show();
+		else tree.show(octree_show_level);
 		
 		
 		glBindVertexArray(0);
@@ -189,13 +207,24 @@ void process_input(GLFWwindow* window) {
 	}
 	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
 	{
-		_point_size -= 0.00001f;
+		_point_size -= 0.01f * deltaTimeMod;
 	}
 	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
 	{
-		_point_size += 0.00001f;
+		_point_size += 0.01f * deltaTimeMod;
 	}
-
+	if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
+	{
+		octree_show_all_levels = !octree_show_all_levels;
+	}
+	if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
+	{
+		++octree_show_level;
+	}
+	if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS)
+	{
+		--octree_show_level;
+	}
 }
 
 
@@ -225,4 +254,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 	camera.ProcessMouseScroll((float)yoffset);
 }
+
+
+
 
