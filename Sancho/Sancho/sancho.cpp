@@ -71,8 +71,10 @@ int main(int argc, char * argv[]) {
 	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
 	PointCloud point_cloud;
-	//load_point_cloud("../stan.txt", 2503, 3, point_cloud);
-	load_point_cloud("../Room.txt", 831159, 3, point_cloud);
+	//load_point_cloud("../Cube.txt", 8, 3, point_cloud);
+	load_point_cloud("../stan.txt", 2503, 3, point_cloud);
+	//load_point_cloud("../Room.txt", 831159, 3, point_cloud);
+	//load_point_cloud("../Box.txt", 964806, 3, point_cloud);
 
 	Shader point_cloud_shader("point_cloud.vert","point_cloud.frag");
 
@@ -103,11 +105,12 @@ int main(int argc, char * argv[]) {
 	point_cloud_shader.setFloat("z_far", Z_FAR);
 	point_cloud_shader.setFloat("height_of_near_plane", height_of_near_plane);
 
-
 	// Real-Time Point Cloud Compression begin
+	EigenTree eigen_tree;
 	Octree tree;
 	Settings settings;
 	Shader cube_shader("point_cloud.vert", "point_cloud.frag");
+
 	settings.cube_shader = &cube_shader;
 	settings.Z_NEAR = 0.1f;
 	settings.Z_FAR = 10000.0f;
@@ -117,9 +120,14 @@ int main(int argc, char * argv[]) {
 	settings.ASPECT_RATIO = ASPECT_RATIO;
 	settings.SCR_HEIGHT = SCR_HEIGHT;
 	settings.SCR_WIDTH = SCR_WIDTH;
-	real_time_point_cloud_compression(point_cloud, tree, settings);
 
-
+	bool eigentree_path = false;
+	if (eigentree_path) {
+		real_time_point_cloud_compression_eigentree(point_cloud, eigen_tree, settings);
+	}
+	else {
+		real_time_point_cloud_compression(point_cloud, tree, settings);
+	}
 
 	//Eigen::Vector4d middle(10.0, 12.0, -15.0, 1.0);
 	// Real-Time Point Cloud Compression end
@@ -148,8 +156,14 @@ int main(int argc, char * argv[]) {
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_POINTS, 0, point_cloud.no_of_points);
 
-		if(octree_show_all_levels) tree.show();
-		else tree.show(octree_show_level);
+		if (eigentree_path) {
+			if (octree_show_all_levels) eigen_tree.show();
+			else eigen_tree.show(octree_show_level);
+		}
+		else {
+			if (octree_show_all_levels) tree.show();
+			else tree.show(octree_show_level);
+		}
 		
 		
 		glBindVertexArray(0);

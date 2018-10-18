@@ -33,6 +33,9 @@
     <ClCompile Include="real_time_point_cloud_compression.cpp">
       <Filter>Source Files\Real-Time Point Cloud Compression</Filter>
     </ClCompile>
+    <ClCompile Include="EigenTree.cpp">
+      <Filter>Source Files\Real-Time Point Cloud Compression</Filter>
+    </ClCompile>
     <ClCompile Include="Octree.cpp">
       <Filter>Source Files\Real-Time Point Cloud Compression</Filter>
     </ClCompile>
@@ -65,11 +68,14 @@
     <ClInclude Include="Plane.h">
       <Filter>Header Files\Real-Time Point Cloud Compression</Filter>
     </ClInclude>
-    <ClInclude Include="Octree.h">
-      <Filter>Header Files\Real-Time Point Cloud Compression</Filter>
-    </ClInclude>
     <ClInclude Include="PointCloud.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EigenTree.h">
+      <Filter>Header Files\Real-Time Point Cloud Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="Octree.h">
+      <Filter>Header Files\Real-Time Point Cloud Compression</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
