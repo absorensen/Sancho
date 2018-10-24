@@ -34,6 +34,82 @@ void Octree::subdivide(Settings &settings)
 	// s_ms verification
 	if (m_indexes.size() < (unsigned int)settings.s_ms) return;
 	//if (m_indexes.size() < 9) return;
+	if (m_indexes.size() < settings.max_points_leaf)
+	{
+		// principal component analysis
+		least_variance_direction();
+
+		// plane data
+		Patch patch;
+		patch.plane_dir1[0] = normal1.x();
+		patch.plane_dir1[1] = normal1.y();
+		patch.plane_dir1[2] = normal1.z();
+		patch.plane_dir1[3] = 1.0;
+
+		patch.plane_dir2[0] = normal2.x();
+		patch.plane_dir2[1] = normal2.y();
+		patch.plane_dir2[2] = normal2.z();
+		patch.plane_dir2[3] = 1.0;
+
+		patch.plane_norm[0] = normal3.x();
+		patch.plane_norm[1] = normal3.y();
+		patch.plane_norm[2] = normal3.z();
+		patch.plane_norm[3] = 1.0;
+
+		double max, mix, may, miy, maz, miz, max_z, min_z;
+		max = mix = may = miy = maz = miz = 0.0;
+
+		bool max_z_init = false;
+		bool min_z_init = false;
+
+		const int num_points = m_indexes.size();
+		Eigen::Vector4d plane_z_axis_projection;
+		double projection_length;
+		for (unsigned int i = 0; i < m_indexes.size(); ++i) {
+			max = max > m_root->m_points[m_indexes[i]].x() ? max : m_root->m_points[m_indexes[i]].x();
+			mix = mix < m_root->m_points[m_indexes[i]].x() ? mix : m_root->m_points[m_indexes[i]].x();
+
+			may = may > m_root->m_points[m_indexes[i]].y() ? may : m_root->m_points[m_indexes[i]].y();
+			miy = miy < m_root->m_points[m_indexes[i]].y() ? miy : m_root->m_points[m_indexes[i]].y();
+
+			maz = maz > m_root->m_points[m_indexes[i]].z() ? maz : m_root->m_points[m_indexes[i]].z();
+			miz = miz < m_root->m_points[m_indexes[i]].z() ? miz : m_root->m_points[m_indexes[i]].z();
+
+
+			// use a simple distance function - only works if m_centroid indeed represents the best fitting plane
+			projection_length = signed_plane_distance(m_root->m_points[m_indexes[i]]);
+
+			if (!max_z_init) {
+				max_z_init = true;
+				max_z = projection_length;
+			}
+			if (!min_z_init) {
+				min_z_init = true;
+				min_z = projection_length;
+			}
+
+			max_z = projection_length > max_z ? projection_length : max_z;
+			min_z = projection_length < min_z ? projection_length : min_z;
+		}
+
+		patch.position[0] = m_centroid.x();
+		patch.position[1] = m_centroid.y();
+		patch.position[2] = m_centroid.z();
+		patch.position[3] = m_centroid.w();
+
+		// re-orient patch with ep1 = n×(1, 0, 0), ep2 = n×ep1, ep3 = n
+		// As the coordinate system’s origin we choose the point cluster’s center of mass.
+
+		int f = 0;
+
+		// create height map
+
+		// create occlusion map
+
+
+
+		return;
+	}
 
 	m_children = new Octree[8];
 	double newsize = m_size * 0.5;
@@ -104,6 +180,109 @@ void Octree::subdivide(Settings &settings)
 	}
 }
 
+Eigen::Matrix3d Octree::fast_covariance_matrix()
+{
+	unsigned int nverts = m_indexes.size();
+	double nvertsd = (double)(nverts);
+	Eigen::Matrix<double, 3, 3> covariance(3, 3);
+
+
+	covariance(0, 0) = 0.0;
+	for (size_t k = 0; k < nverts; k++)
+		covariance(0, 0) += (m_root->m_points[m_indexes[k]][0] - m_centroid[0]) * (m_root->m_points[m_indexes[k]][0] - m_centroid[0]);
+	covariance(0, 0) /= (nvertsd);
+	if (fabs(m_covariance(0, 0)) < EPS)
+		m_covariance(0, 0) = 0.0;
+
+	covariance(1, 1) = 0.0;
+	for (size_t k = 0; k < nverts; k++)
+		covariance(1, 1) += (m_root->m_points[m_indexes[k]][1] - m_centroid[1]) * (m_root->m_points[m_indexes[k]][1] - m_centroid[1]);
+	covariance(1, 1) /= (nvertsd);
+	if (fabs(m_covariance(1, 1)) < EPS)
+		m_covariance(1, 1) = 0.0;
+
+	covariance(2, 2) = 0.0;
+	for (size_t k = 0; k < nverts; k++)
+		covariance(2, 2) += (m_root->m_points[m_indexes[k]][2] - m_centroid[2]) * (m_root->m_points[m_indexes[k]][2] - m_centroid[2]);
+	covariance(2, 2) /= (nvertsd);
+	if (fabs(m_covariance(2, 2)) < EPS)
+		m_covariance(2, 2) = 0.0;
+
+	covariance(1, 0) = 0.0;
+	for (size_t k = 0; k < nverts; k++)
+		covariance(1, 0) += (m_root->m_points[m_indexes[k]][1] - m_centroid[1]) * (m_root->m_points[m_indexes[k]][0] - m_centroid[0]);
+	covariance(1, 0) /= (nvertsd);
+	if (fabs(m_covariance(1, 0)) < EPS)
+		m_covariance(1, 0) = 0.0;
+
+	covariance(2, 0) = 0.0;
+	for (size_t k = 0; k < nverts; k++)
+		covariance(2, 0) += (m_root->m_points[m_indexes[k]][2] - m_centroid[2]) * (m_root->m_points[m_indexes[k]][0] - m_centroid[0]);
+	covariance(2, 0) /= (nvertsd);
+	if (fabs(m_covariance(2, 0)) < EPS)
+		m_covariance(2, 0) = 0.0;
+
+	covariance(2, 1) = 0.0;
+	for (size_t k = 0; k < nverts; k++)
+		covariance(2, 1) += (m_root->m_points[m_indexes[k]][2] - m_centroid[2]) * (m_root->m_points[m_indexes[k]][1] - m_centroid[1]);
+	covariance(2, 1) /= (nvertsd);
+	if (fabs(m_covariance(2, 1)) < EPS)
+		m_covariance(2, 1) = 0.0;
+
+	covariance(0, 2) = covariance(2, 0);
+	covariance(0, 1) = covariance(1, 0);
+	covariance(1, 2) = covariance(2, 1);
+
+	return covariance;
+}
+
+void Octree::least_variance_direction()
+{
+	m_covariance = fast_covariance_matrix();
+
+	Eigen::EigenSolver< Eigen::Matrix3d > eigenvalue_decomp(m_covariance);
+	Eigen::Vector3d eigenvalues_vector = eigenvalue_decomp.eigenvalues().real();
+
+	int min_index = 0, max_index = 0, middle_index = 0;
+
+	if (eigenvalues_vector(1) < eigenvalues_vector(min_index)) {
+		min_index = 1;
+	}
+	else if (eigenvalues_vector(1) > eigenvalues_vector(max_index)) {
+		max_index = 1;
+	}
+
+	if (eigenvalues_vector(2) < eigenvalues_vector(min_index)) {
+		min_index = 2;
+	}
+	else if (eigenvalues_vector(2) > eigenvalues_vector(max_index)) {
+		max_index = 2;
+	}
+
+	while (middle_index == min_index || middle_index == max_index) middle_index++;
+
+	variance1 = eigenvalues_vector(min_index);
+	variance2 = eigenvalues_vector(middle_index);
+	variance3 = eigenvalues_vector(max_index);
+
+	Eigen::Matrix3d eigenvectors_matrix = eigenvalue_decomp.pseudoEigenvectors();
+
+	normal1 = Eigen::Vector4d(eigenvectors_matrix(0, min_index), eigenvectors_matrix(1, min_index), eigenvectors_matrix(2, min_index), 1.0);
+	normal2 = Eigen::Vector4d(eigenvectors_matrix(0, middle_index), eigenvectors_matrix(1, middle_index), eigenvectors_matrix(2, middle_index), 1.0);
+	normal3 = Eigen::Vector4d(eigenvectors_matrix(0, max_index), eigenvectors_matrix(1, max_index), eigenvectors_matrix(2, max_index), 1.0);
+}
+
+double Octree::plane_distance(Eigen::Vector4d &point)
+{
+	return abs((point - m_centroid).dot(normal1.normalized()));
+}
+
+double Octree::signed_plane_distance(Eigen::Vector4d &point)
+{
+	return (point - m_centroid).dot(normal1.normalized());
+}
+
+
 void Octree::get_nodes(std::vector< Octree*> &nodes)
 {
 	if (m_children != NULL)
@@ -115,6 +294,12 @@ void Octree::get_nodes(std::vector< Octree*> &nodes)
 	}
 }
 
+
+void Octree::show_level(int height) {
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	show(height);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
 
 void Octree::show(int height)
 {
@@ -130,6 +315,12 @@ void Octree::show(int height)
 			m_children[i].show(height);
 		}
 	}
+}
+
+void Octree::show_tree() {
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	show();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void Octree::show()
@@ -237,6 +428,7 @@ void Octree::draw_wire_cube(Eigen::Vector4d &middle, float size) {
 
 
 		};
+
 		glGenVertexArrays(1, &wireCubeVAO);
 		glGenBuffers(1, &wireCubeVBO);
 		// fill buffer
@@ -258,18 +450,21 @@ void Octree::draw_wire_cube(Eigen::Vector4d &middle, float size) {
 
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), translate);
 	model = glm::scale(model, glm::vec3(size, size, size));
+	//glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(size, size, size));
+	//model = glm::translate(model, translate);
 	glm::mat4 MVPmatrix = projection * view * model;
 
 	_settings->cube_shader->use();
 	_settings->cube_shader->setMat4("mvp_matrix", MVPmatrix);
 	_settings->cube_shader->setVec3("cam_pos", _settings->camera->Position);
 	_settings->cube_shader->setFloat("point_size", _settings->point_size);
+	//_settings->cube_shader->setVec3("color", float(std::rand())/RAND_MAX, float(std::rand()) / RAND_MAX, float(std::rand()) / RAND_MAX);
 
 	// render Cube
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBindVertexArray(wireCubeVAO);
 	// should be solid/wire switch
 	glDrawArrays(GL_LINES, 0, 48);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glBindVertexArray(0);
 }

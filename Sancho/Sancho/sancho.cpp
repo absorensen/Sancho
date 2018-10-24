@@ -73,6 +73,7 @@ int main(int argc, char * argv[]) {
 	PointCloud point_cloud;
 	//load_point_cloud("../Cube.txt", 8, 3, point_cloud);
 	load_point_cloud("../stan.txt", 2503, 3, point_cloud);
+	//load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
 	//load_point_cloud("../Room.txt", 831159, 3, point_cloud);
 	//load_point_cloud("../Box.txt", 964806, 3, point_cloud);
 
@@ -161,8 +162,8 @@ int main(int argc, char * argv[]) {
 			else eigen_tree.show(octree_show_level);
 		}
 		else {
-			if (octree_show_all_levels) tree.show();
-			else tree.show(octree_show_level);
+			if (octree_show_all_levels) tree.show_tree();
+			else tree.show_level(octree_show_level);
 		}
 		
 		

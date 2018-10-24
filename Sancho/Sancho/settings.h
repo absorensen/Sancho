@@ -15,6 +15,8 @@ public:
 
 	Settings()
 	{
+		max_points_leaf = 32;
+
 		// Accumulator discretization
 		phi_num = 30;
 		rho_num = 300;
@@ -80,6 +82,7 @@ public:
 
 	int s_level;
 	int s_ms;
+	int max_points_leaf;
 	float s_ps;
 
 	double max_point_distance;
