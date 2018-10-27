@@ -5,6 +5,9 @@
 
 #include "Octree.h"
 
+class Octree;
+struct Patch;
+
 Octree::Octree()
 {
 	m_centroid = Eigen::Vector4d(0.0, 0.0, 0.0, 0.0);
@@ -34,7 +37,8 @@ void Octree::subdivide(Settings &settings)
 	// s_ms verification
 	if (m_indexes.size() < (unsigned int)settings.s_ms) return;
 	//if (m_indexes.size() < 9) return;
-	if (m_indexes.size() < settings.max_points_leaf)
+	if (false)
+	//if (m_indexes.size() < settings.max_points_leaf)
 	{
 		// principal component analysis
 		least_variance_direction();
@@ -92,15 +96,20 @@ void Octree::subdivide(Settings &settings)
 			min_z = projection_length < min_z ? projection_length : min_z;
 		}
 
-		patch.position[0] = m_centroid.x();
-		patch.position[1] = m_centroid.y();
-		patch.position[2] = m_centroid.z();
-		patch.position[3] = m_centroid.w();
-
 		// re-orient patch with ep1 = n×(1, 0, 0), ep2 = n×ep1, ep3 = n
-		// As the coordinate system’s origin we choose the point cluster’s center of mass.
+		// As the coordinate system’s origin we choose the point cluster’s center of mass.
+		// needs to be tested -
+		Eigen::Vector3d x(1.0, 0.0, 0.0);
+		Eigen::Vector3d n(normal3.x(), normal3.y(), normal3.z());
+		Eigen::Vector3d ep1 = n.cross(x);
+		Eigen::Vector3d ep2 = n.cross(ep1);
+		Eigen::Vector3d ep3 = n;
 
-		int f = 0;
+		patch.origin[0] = m_centroid.x();
+		patch.origin[1] = m_centroid.y();
+		patch.origin[2] = m_centroid.z();
+		patch.origin[3] = m_centroid.w();
+
 
 		// create height map
 
@@ -296,16 +305,17 @@ void Octree::get_nodes(std::vector< Octree*> &nodes)
 
 
 void Octree::show_level(int height) {
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	show(height);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void Octree::show(int height)
 {
+	draw_points();
 	height--;
 	if (height == 0) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		draw_wire_cube(m_middle, float(m_size));
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		return;
 	}
 	if (m_children != NULL)
@@ -318,14 +328,16 @@ void Octree::show(int height)
 }
 
 void Octree::show_tree() {
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	show();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void Octree::show()
 {
+	draw_points();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	draw_wire_cube(m_middle, float(m_size));
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 	if (m_children != NULL)
 	{
 		for (short i = 0; i < 8; ++i)
@@ -335,6 +347,56 @@ void Octree::show()
 	}
 }
 
+void Octree::draw_points() {
+	// initialize (if necessary)
+	if (pointsVAO == 0)
+	{
+		_settings->point_shader->use();
+		_settings->point_shader->setVec3("color", 0.9f, 0.4f, 0.0f);
+		_settings->point_shader->setFloat("point_size", _settings->point_size);
+		_settings->point_shader->setFloat("z_near", _settings->Z_NEAR);
+		_settings->point_shader->setFloat("z_far", _settings->Z_FAR);
+		_settings->point_shader->setFloat("height_of_near_plane", _settings->height_of_near_plane);
+		float* points = new float[3 * m_indexes.size()];
+		int j = 0;
+		for (size_t i = 0; i < m_indexes.size(); ++i)
+		{
+			points[j] = float(m_root->m_points[m_indexes[i]](0));
+			++j;
+			points[j] = float(m_root->m_points[m_indexes[i]](1));
+			++j;
+			points[j] = float(m_root->m_points[m_indexes[i]](2));
+			++j;
+		}
+
+		glGenVertexArrays(1, &pointsVAO);
+		glGenBuffers(1, &pointsVBO);
+		glBindVertexArray(pointsVAO);
+
+		glBindBuffer(GL_ARRAY_BUFFER, pointsVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*m_indexes.size()*3, points, GL_STATIC_DRAW);
+		GLint position_attribute = glGetAttribLocation(_settings->point_shader->ID, "aPos");
+		glVertexAttribPointer(position_attribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
+		glEnableVertexAttribArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	}
+
+	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), (float)_settings->SCR_WIDTH / (float)_settings->SCR_HEIGHT, _settings->Z_NEAR, _settings->Z_FAR);
+	glm::mat4 view = _settings->camera->GetViewMatrix();
+	glm::mat4 model = glm::mat4(1.0f);
+	glm::mat4 MVPmatrix = projection * view * model;
+
+	_settings->point_shader->use();
+	_settings->point_shader->setMat4("mvp_matrix", MVPmatrix);
+	_settings->point_shader->setVec3("cam_pos", _settings->camera->Position);
+	_settings->point_shader->setFloat("point_size", _settings->point_size);
+
+	glBindVertexArray(pointsVAO);
+	glDrawArrays(GL_POINTS, 0, m_indexes.size());
+	glBindVertexArray(0);
+}
 
 void Octree::draw_wire_cube(Eigen::Vector4d &middle, float size) {
 	// initialize (if necessary)
@@ -461,10 +523,7 @@ void Octree::draw_wire_cube(Eigen::Vector4d &middle, float size) {
 	//_settings->cube_shader->setVec3("color", float(std::rand())/RAND_MAX, float(std::rand()) / RAND_MAX, float(std::rand()) / RAND_MAX);
 
 	// render Cube
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBindVertexArray(wireCubeVAO);
-	// should be solid/wire switch
 	glDrawArrays(GL_LINES, 0, 48);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glBindVertexArray(0);
 }

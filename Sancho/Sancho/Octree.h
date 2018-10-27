@@ -10,7 +10,7 @@ struct Patch {
 	double plane_dir2[4];
 	double plane_norm[4];
 	double plane_orientation[4];
-	double position[4];
+	double origin[4];
 	int8_t height_map[16][16];
 	bool occupancy_map[16][16];
 
@@ -36,6 +36,7 @@ public:
 	double plane_distance(Eigen::Vector4d &point);
 	double signed_plane_distance(Eigen::Vector4d &point);
 	void draw_wire_cube(Eigen::Vector4d &middle, float size);
+	void draw_points();
 	Eigen::Matrix3d fast_covariance_matrix();
 
 
@@ -53,4 +54,8 @@ public:
 	// wire cube
 	unsigned int wireCubeVAO = 0;
 	unsigned int wireCubeVBO = 0;
+
+	// points
+	unsigned int pointsVAO = 0;
+	unsigned int pointsVBO = 0;
 };

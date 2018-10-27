@@ -5,6 +5,8 @@
 
 #include "EigenTree.h"
 
+class EigenTree;
+
 EigenTree::EigenTree()
 {
 	m_centroid = Eigen::Vector4d(0.0, 0.0, 0.0, 0.0);

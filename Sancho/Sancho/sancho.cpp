@@ -1,6 +1,7 @@
 #include "sancho.h"
 
 // settings
+Settings settings;
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 800;
 const float Z_NEAR = 0.1f;
@@ -109,9 +110,10 @@ int main(int argc, char * argv[]) {
 	// Real-Time Point Cloud Compression begin
 	EigenTree eigen_tree;
 	Octree tree;
-	Settings settings;
 	Shader cube_shader("point_cloud.vert", "point_cloud.frag");
+	Shader point_shader("point_cloud.vert", "point_cloud.frag");
 
+	settings.point_shader = &point_shader;
 	settings.cube_shader = &cube_shader;
 	settings.Z_NEAR = 0.1f;
 	settings.Z_FAR = 10000.0f;
@@ -144,18 +146,18 @@ int main(int argc, char * argv[]) {
 
 		glClearColor(0.1f, 0.1f, 0.4f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, Z_NEAR, Z_FAR);
-		glm::mat4 view = camera.GetViewMatrix();
-		glm::mat4 model = glm::mat4(1.0f);
-		glm::mat4 MVPmatrix = projection * view * model;
+		//glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, Z_NEAR, Z_FAR);
+		//glm::mat4 view = camera.GetViewMatrix();
+		//glm::mat4 model = glm::mat4(1.0f);
+		//glm::mat4 MVPmatrix = projection * view * model;
 
-		point_cloud_shader.use();
-		point_cloud_shader.setMat4("mvp_matrix", MVPmatrix);
-		point_cloud_shader.setVec3("cam_pos", camera.Position);
-		point_cloud_shader.setFloat("point_size", _point_size);
+		//point_cloud_shader.use();
+		//point_cloud_shader.setMat4("mvp_matrix", MVPmatrix);
+		//point_cloud_shader.setVec3("cam_pos", camera.Position);
+		//point_cloud_shader.setFloat("point_size", _point_size);
 
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_POINTS, 0, point_cloud.no_of_points);
+		//glBindVertexArray(VAO);
+		//glDrawArrays(GL_POINTS, 0, point_cloud.no_of_points);
 
 		if (eigentree_path) {
 			if (octree_show_all_levels) eigen_tree.show();
@@ -225,10 +227,13 @@ void process_input(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
 	{
 		_point_size -= 0.01f * deltaTimeMod;
+		settings.point_size -= 0.01f * deltaTimeMod;
 	}
 	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
 	{
 		_point_size += 0.01f * deltaTimeMod;
+		settings.point_size += 0.01f * deltaTimeMod;
+		
 	}
 	if (timeDifference > key_press_threshold && glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
 	{

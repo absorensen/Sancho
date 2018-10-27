@@ -100,6 +100,7 @@ public:
 	float height_of_near_plane;
 
 	Shader* cube_shader;
+	Shader* point_shader;
 	Camera* camera;
 
 	std::string file;
