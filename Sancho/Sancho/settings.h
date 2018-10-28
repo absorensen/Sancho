@@ -99,8 +99,13 @@ public:
 	float point_size;
 	float height_of_near_plane;
 
+	bool* draw_patch_normals;
+	bool* draw_patch_planes;
+
 	Shader* cube_shader;
 	Shader* point_shader;
+	Shader* normals_shader;
+	
 	Camera* camera;
 
 	std::string file;

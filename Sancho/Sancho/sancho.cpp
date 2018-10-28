@@ -14,7 +14,8 @@ float _point_size = 0.01f;
 bool octree_show_all_levels = false;
 int octree_show_level = 0;
 double time_since_last_frame = 0.0;
-
+bool draw_patch_normals = false;
+bool draw_patch_planes = false;
 
 // camera
 //Camera camera(-2.0f, 1.5f, 3.4f, 0.0f, 1.0f, 0.0f, -50.0f, -12.0f);
@@ -112,9 +113,11 @@ int main(int argc, char * argv[]) {
 	Octree tree;
 	Shader cube_shader("point_cloud.vert", "point_cloud.frag");
 	Shader point_shader("point_cloud.vert", "point_cloud.frag");
+	Shader normals_shader("point_cloud.vert", "point_cloud.frag");
 
 	settings.point_shader = &point_shader;
 	settings.cube_shader = &cube_shader;
+	settings.normals_shader = &normals_shader;
 	settings.Z_NEAR = 0.1f;
 	settings.Z_FAR = 10000.0f;
 	settings.point_size = _point_size;
@@ -123,6 +126,8 @@ int main(int argc, char * argv[]) {
 	settings.ASPECT_RATIO = ASPECT_RATIO;
 	settings.SCR_HEIGHT = SCR_HEIGHT;
 	settings.SCR_WIDTH = SCR_WIDTH;
+	settings.draw_patch_normals = &draw_patch_normals;
+	settings.draw_patch_planes = &draw_patch_planes;
 
 	bool eigentree_path = false;
 	if (eigentree_path) {
@@ -223,6 +228,14 @@ void process_input(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
 	{
 		camera.ProcessKeyboard(DOWN, deltaTimeMod);
+	}
+	if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
+	{
+		draw_patch_normals = !draw_patch_normals;
+	}
+	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+	{
+		draw_patch_planes = !draw_patch_planes;
 	}
 	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
 	{

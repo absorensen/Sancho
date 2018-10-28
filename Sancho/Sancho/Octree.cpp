@@ -13,6 +13,7 @@ Octree::Octree()
 	m_centroid = Eigen::Vector4d(0.0, 0.0, 0.0, 0.0);
 	color = Eigen::Vector4d(0.5, 0.5, 0.5, 1.0);
 	m_children = NULL;
+	m_is_leaf = false;
 }
 
 
@@ -35,7 +36,11 @@ void Octree::subdivide(Settings &settings)
 {
 	_settings = &settings;
 	// s_ms verification
-	if (m_indexes.size() < (unsigned int)settings.s_ms) return;
+	if (m_indexes.size() < 9) {
+	//if (m_indexes.size() < (unsigned int)settings.s_ms) {
+		m_is_leaf = true;
+		return;
+	}
 	//if (m_indexes.size() < 9) return;
 	if (false)
 	//if (m_indexes.size() < settings.max_points_leaf)
@@ -305,17 +310,18 @@ void Octree::get_nodes(std::vector< Octree*> &nodes)
 
 
 void Octree::show_level(int height) {
+	draw_points();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	show(height);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void Octree::show(int height)
 {
-	draw_points();
 	height--;
 	if (height == 0) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		draw_wire_cube(m_middle, float(m_size));
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		if (m_is_leaf && *_settings->draw_patch_normals) draw_normal(1.0f);
 		return;
 	}
 	if (m_children != NULL)
@@ -328,16 +334,16 @@ void Octree::show(int height)
 }
 
 void Octree::show_tree() {
+	draw_points();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	show();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void Octree::show()
 {
-	draw_points();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	draw_wire_cube(m_middle, float(m_size));
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+	if (m_is_leaf && *_settings->draw_patch_normals) draw_normal(1.0f);
 	if (m_children != NULL)
 	{
 		for (short i = 0; i < 8; ++i)
@@ -507,13 +513,8 @@ void Octree::draw_wire_cube(Eigen::Vector4d &middle, float size) {
 	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), (float)_settings->SCR_WIDTH / (float)_settings->SCR_HEIGHT, _settings->Z_NEAR, _settings->Z_FAR);
 	glm::mat4 view = _settings->camera->GetViewMatrix();
 	glm::vec3 translate(float(middle.x()), float(middle.y()), float(middle.z()));
-	//glm::vec3 translate(float(middle.x()*0.5f), float(middle.y()*0.5f), float(middle.z())*0.5f);
-
-
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), translate);
 	model = glm::scale(model, glm::vec3(size, size, size));
-	//glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(size, size, size));
-	//model = glm::translate(model, translate);
 	glm::mat4 MVPmatrix = projection * view * model;
 
 	_settings->cube_shader->use();
@@ -525,5 +526,52 @@ void Octree::draw_wire_cube(Eigen::Vector4d &middle, float size) {
 	// render Cube
 	glBindVertexArray(wireCubeVAO);
 	glDrawArrays(GL_LINES, 0, 48);
+	glBindVertexArray(0);
+}
+
+void Octree::draw_normal(const float length) {
+	// initialize (if necessary)
+	if (normalVAO == 0)
+	{
+		_settings->normals_shader->use();
+		_settings->normals_shader->setVec3("color", 0.8f, 0.0f, 0.7f);
+		_settings->normals_shader->setFloat("point_size", _settings->point_size);
+		_settings->normals_shader->setFloat("z_near", _settings->Z_NEAR);
+		_settings->normals_shader->setFloat("z_far", _settings->Z_FAR);
+		_settings->normals_shader->setFloat("height_of_near_plane", _settings->height_of_near_plane);
+		float vertices[] = {
+			0.0f, 0.0f, 0.0f, // bottom-left
+			1.0f, 1.0f, 1.0f, // bottom-right     
+		};
+
+		glGenVertexArrays(1, &normalVAO);
+		glGenBuffers(1, &normalVBO);
+		// fill buffer
+		glBindBuffer(GL_ARRAY_BUFFER, normalVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		// link vertex attributes
+		glBindVertexArray(normalVAO);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	}
+
+	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), (float)_settings->SCR_WIDTH / (float)_settings->SCR_HEIGHT, _settings->Z_NEAR, _settings->Z_FAR);
+	glm::mat4 view = _settings->camera->GetViewMatrix();
+	glm::vec3 translate(float(m_centroid.x()), float(m_centroid.y()), float(m_centroid.z()));
+	glm::mat4 model = glm::translate(glm::mat4(1.0f), translate);
+	model = glm::scale(model, glm::vec3(length, length, length));
+	glm::mat4 MVPmatrix = projection * view * model;
+
+	_settings->cube_shader->use();
+	_settings->cube_shader->setMat4("mvp_matrix", MVPmatrix);
+	_settings->cube_shader->setVec3("cam_pos", _settings->camera->Position);
+	_settings->cube_shader->setFloat("point_size", _settings->point_size);
+	//_settings->cube_shader->setVec3("color", float(std::rand())/RAND_MAX, float(std::rand()) / RAND_MAX, float(std::rand()) / RAND_MAX);
+
+	// render Cube
+	glBindVertexArray(normalVAO);
+	glDrawArrays(GL_LINES, 0, 2);
 	glBindVertexArray(0);
 }

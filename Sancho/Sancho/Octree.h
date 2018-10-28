@@ -37,6 +37,7 @@ public:
 	double signed_plane_distance(Eigen::Vector4d &point);
 	void draw_wire_cube(Eigen::Vector4d &middle, float size);
 	void draw_points();
+	void draw_normal(const float length);
 	Eigen::Matrix3d fast_covariance_matrix();
 
 
@@ -44,6 +45,7 @@ public:
 	std::vector<int> m_indexes;
 
 	Eigen::Matrix3d m_covariance;
+	bool m_is_leaf;
 	Octree *m_children, *m_root;
 	Settings* _settings;
 	Eigen::Vector4d normal1, normal2, normal3, m_middle;
@@ -58,4 +60,8 @@ public:
 	// points
 	unsigned int pointsVAO = 0;
 	unsigned int pointsVBO = 0;
+
+	// normals
+	unsigned int normalVAO = 0;
+	unsigned int normalVBO = 0;
 };
