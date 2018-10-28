@@ -68,6 +68,7 @@ int main(int argc, char * argv[]) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_POINT_SMOOTH);
+	glLineWidth(4.0f);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glDepthFunc(GL_LESS);
 	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
@@ -114,10 +115,12 @@ int main(int argc, char * argv[]) {
 	Shader cube_shader("point_cloud.vert", "point_cloud.frag");
 	Shader point_shader("point_cloud.vert", "point_cloud.frag");
 	Shader normals_shader("point_cloud.vert", "point_cloud.frag");
+	Shader patch_planes_shader("point_cloud.vert", "point_cloud.frag");
 
 	settings.point_shader = &point_shader;
 	settings.cube_shader = &cube_shader;
 	settings.normals_shader = &normals_shader;
+	settings.patch_planes_shader = &patch_planes_shader;
 	settings.Z_NEAR = 0.1f;
 	settings.Z_FAR = 10000.0f;
 	settings.point_size = _point_size;
@@ -169,6 +172,7 @@ int main(int argc, char * argv[]) {
 			else eigen_tree.show(octree_show_level);
 		}
 		else {
+			if (draw_patch_planes) tree.show_patch_planes(0.005f);
 			if (draw_patch_normals) tree.show_normals(0.01f);
 			if (octree_show_all_levels) tree.show_tree();
 			else tree.show_level(octree_show_level);

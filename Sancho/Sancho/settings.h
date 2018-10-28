@@ -105,6 +105,7 @@ public:
 	Shader* cube_shader;
 	Shader* point_shader;
 	Shader* normals_shader;
+	Shader* patch_planes_shader;
 	
 	Camera* camera;
 

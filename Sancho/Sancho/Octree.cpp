@@ -366,6 +366,17 @@ void Octree::show_normals(const float length) {
 	}
 }
 
+void Octree::show_patch_planes(const float size) {
+	if (m_is_leaf) draw_patch_plane(size);
+	if (m_children != NULL)
+	{
+		for (short i = 0; i < 8; ++i)
+		{
+			m_children[i].show_patch_planes(size);
+		}
+	}
+}
+
 void Octree::draw_points() {
 	// initialize (if necessary)
 	if (pointsVAO == 0)
@@ -539,6 +550,60 @@ void Octree::draw_wire_cube(Eigen::Vector4d &middle, float size) {
 	// render Cube
 	glBindVertexArray(wireCubeVAO);
 	glDrawArrays(GL_LINES, 0, 48);
+	glBindVertexArray(0);
+}
+
+void Octree::draw_patch_plane(const float size) {
+	// initialize (if necessary)
+	if (planeVAO == 0)
+	{
+		_settings->patch_planes_shader->use();
+		_settings->patch_planes_shader->setVec3("color", 0.0f, 0.9f, 0.0f);
+		_settings->patch_planes_shader->setFloat("point_size", _settings->point_size);
+		_settings->patch_planes_shader->setFloat("z_near", _settings->Z_NEAR);
+		_settings->patch_planes_shader->setFloat("z_far", _settings->Z_FAR);
+		_settings->patch_planes_shader->setFloat("height_of_near_plane", _settings->height_of_near_plane);
+		float vertices[] = {
+			// triangle 1
+			float(m_centroid.x() + normal2.x()), float(m_centroid.y() + normal2.y()), float(m_centroid.z() + normal2.z()),
+			float(m_centroid.x() - normal2.x()), float(m_centroid.y() - normal2.y()), float(m_centroid.z() - normal2.z()),
+			float(m_centroid.x() + normal3.x()), float(m_centroid.y() + normal3.y()), float(m_centroid.z() + normal3.z()),
+			
+			// triangle 2
+			float(m_centroid.x() + normal2.x()), float(m_centroid.y() + normal2.y()), float(m_centroid.z() + normal2.z()),
+			float(m_centroid.x() - normal2.x()), float(m_centroid.y() - normal2.y()), float(m_centroid.z() - normal2.z()),
+			float(m_centroid.x() - normal3.x()), float(m_centroid.y() - normal3.y()), float(m_centroid.z() - normal3.z())
+		};
+
+		glGenVertexArrays(1, &planeVAO);
+		glGenBuffers(1, &planeVBO);
+		// fill buffer
+		glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		// link vertex attributes
+		glBindVertexArray(planeVAO);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	}
+
+	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), (float)_settings->SCR_WIDTH / (float)_settings->SCR_HEIGHT, _settings->Z_NEAR, _settings->Z_FAR);
+	glm::mat4 view = _settings->camera->GetViewMatrix();
+	glm::vec3 translate(float(m_centroid.x()), float(m_centroid.y()), float(m_centroid.z()));
+	glm::mat4 model = glm::translate(glm::mat4(1.0f), translate);
+	model = glm::scale(model, glm::vec3(size, size, size));
+	glm::mat4 MVPmatrix = projection * view * model;
+
+	_settings->patch_planes_shader->use();
+	_settings->patch_planes_shader->setMat4("mvp_matrix", MVPmatrix);
+	_settings->patch_planes_shader->setVec3("cam_pos", _settings->camera->Position);
+	_settings->patch_planes_shader->setFloat("point_size", _settings->point_size);
+	//_settings->cube_shader->setVec3("color", float(std::rand())/RAND_MAX, float(std::rand()) / RAND_MAX, float(std::rand()) / RAND_MAX);
+
+	// render Cube
+	glBindVertexArray(planeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 }
 

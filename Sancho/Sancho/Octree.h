@@ -30,6 +30,7 @@ public:
 	void show_level(int height);
 	void show_tree();
 	void show_normals(const float length);
+	void show_patch_planes(const float size);
 	void show();
 	void clear(void);
 	void get_nodes(std::vector< Octree*> &nodes);
@@ -39,6 +40,7 @@ public:
 	void draw_wire_cube(Eigen::Vector4d &middle, float size);
 	void draw_points();
 	void draw_normal(const float length);
+	void draw_patch_plane(const float size);
 	Eigen::Matrix3d fast_covariance_matrix();
 
 
@@ -65,4 +67,8 @@ public:
 	// normals
 	unsigned int normalVAO = 0;
 	unsigned int normalVBO = 0;
+
+	// planes
+	unsigned int planeVAO = 0;
+	unsigned int planeVBO = 0;
 };
