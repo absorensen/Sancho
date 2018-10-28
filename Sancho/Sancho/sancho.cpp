@@ -169,6 +169,7 @@ int main(int argc, char * argv[]) {
 			else eigen_tree.show(octree_show_level);
 		}
 		else {
+			if (draw_patch_normals) tree.show_normals(0.01f);
 			if (octree_show_all_levels) tree.show_tree();
 			else tree.show_level(octree_show_level);
 		}
@@ -178,6 +179,7 @@ int main(int argc, char * argv[]) {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}   
+	//needs a safe deletion for tree structure
 
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
@@ -229,13 +231,17 @@ void process_input(GLFWwindow* window) {
 	{
 		camera.ProcessKeyboard(DOWN, deltaTimeMod);
 	}
-	if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
+	if (timeDifference > key_press_threshold && glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
 	{
 		draw_patch_normals = !draw_patch_normals;
+		std::cout << "Draw patch normals equals: " << draw_patch_normals << std::endl;
+		time_since_last_frame = glfwGetTime();
 	}
-	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+	if (timeDifference > key_press_threshold && glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
 	{
 		draw_patch_planes = !draw_patch_planes;
+		std::cout << "Draw patch planes equals: " << draw_patch_planes << std::endl;
+		time_since_last_frame = glfwGetTime();
 	}
 	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
 	{

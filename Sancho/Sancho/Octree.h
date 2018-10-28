@@ -29,6 +29,7 @@ public:
 	void show(int height);
 	void show_level(int height);
 	void show_tree();
+	void show_normals(const float length);
 	void show();
 	void clear(void);
 	void get_nodes(std::vector< Octree*> &nodes);

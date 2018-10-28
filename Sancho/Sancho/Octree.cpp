@@ -39,6 +39,7 @@ void Octree::subdivide(Settings &settings)
 	if (m_indexes.size() < 9) {
 	//if (m_indexes.size() < (unsigned int)settings.s_ms) {
 		m_is_leaf = true;
+		least_variance_direction();
 		return;
 	}
 	//if (m_indexes.size() < 9) return;
@@ -273,7 +274,7 @@ void Octree::least_variance_direction()
 		max_index = 2;
 	}
 
-	while (middle_index == min_index || middle_index == max_index) middle_index++;
+	while (middle_index == min_index || middle_index == max_index) ++middle_index;
 
 	variance1 = eigenvalues_vector(min_index);
 	variance2 = eigenvalues_vector(middle_index);
@@ -282,8 +283,11 @@ void Octree::least_variance_direction()
 	Eigen::Matrix3d eigenvectors_matrix = eigenvalue_decomp.pseudoEigenvectors();
 
 	normal1 = Eigen::Vector4d(eigenvectors_matrix(0, min_index), eigenvectors_matrix(1, min_index), eigenvectors_matrix(2, min_index), 1.0);
+	normal1.normalize();
 	normal2 = Eigen::Vector4d(eigenvectors_matrix(0, middle_index), eigenvectors_matrix(1, middle_index), eigenvectors_matrix(2, middle_index), 1.0);
+	normal2.normalize();
 	normal3 = Eigen::Vector4d(eigenvectors_matrix(0, max_index), eigenvectors_matrix(1, max_index), eigenvectors_matrix(2, max_index), 1.0);
+	normal3.normalize();
 }
 
 double Octree::plane_distance(Eigen::Vector4d &point)
@@ -321,7 +325,6 @@ void Octree::show(int height)
 	height--;
 	if (height == 0) {
 		draw_wire_cube(m_middle, float(m_size));
-		if (m_is_leaf && *_settings->draw_patch_normals) draw_normal(1.0f);
 		return;
 	}
 	if (m_children != NULL)
@@ -343,12 +346,22 @@ void Octree::show_tree() {
 void Octree::show()
 {
 	draw_wire_cube(m_middle, float(m_size));
-	if (m_is_leaf && *_settings->draw_patch_normals) draw_normal(1.0f);
 	if (m_children != NULL)
 	{
 		for (short i = 0; i < 8; ++i)
 		{
 			m_children[i].show();
+		}
+	}
+}
+
+void Octree::show_normals(const float length) {
+	if (m_is_leaf) draw_normal(length);
+	if (m_children != NULL)
+	{
+		for (short i = 0; i < 8; ++i)
+		{
+			m_children[i].show_normals(length);
 		}
 	}
 }
@@ -540,8 +553,8 @@ void Octree::draw_normal(const float length) {
 		_settings->normals_shader->setFloat("z_far", _settings->Z_FAR);
 		_settings->normals_shader->setFloat("height_of_near_plane", _settings->height_of_near_plane);
 		float vertices[] = {
-			0.0f, 0.0f, 0.0f, // bottom-left
-			1.0f, 1.0f, 1.0f, // bottom-right     
+			float(m_centroid.x()), float(m_centroid.y()), float(m_centroid.z()), // bottom-left
+			float(m_centroid.x()+normal1.x()), float(m_centroid.y() + normal1.y()), float(m_centroid.z() + normal1.z()) // bottom-right     
 		};
 
 		glGenVertexArrays(1, &normalVAO);
@@ -564,10 +577,10 @@ void Octree::draw_normal(const float length) {
 	model = glm::scale(model, glm::vec3(length, length, length));
 	glm::mat4 MVPmatrix = projection * view * model;
 
-	_settings->cube_shader->use();
-	_settings->cube_shader->setMat4("mvp_matrix", MVPmatrix);
-	_settings->cube_shader->setVec3("cam_pos", _settings->camera->Position);
-	_settings->cube_shader->setFloat("point_size", _settings->point_size);
+	_settings->normals_shader->use();
+	_settings->normals_shader->setMat4("mvp_matrix", MVPmatrix);
+	_settings->normals_shader->setVec3("cam_pos", _settings->camera->Position);
+	_settings->normals_shader->setFloat("point_size", _settings->point_size);
 	//_settings->cube_shader->setVec3("color", float(std::rand())/RAND_MAX, float(std::rand()) / RAND_MAX, float(std::rand()) / RAND_MAX);
 
 	// render Cube
