@@ -79,7 +79,6 @@ public:
 
 	int phi_num;
 	int rho_num;
-
 	int s_level;
 	int s_ms;
 	int max_points_leaf;
@@ -98,6 +97,8 @@ public:
 	float ASPECT_RATIO;
 	float point_size;
 	float height_of_near_plane;
+
+	bool reorient_patches;
 
 	bool* draw_patch_normals;
 	bool* draw_patch_planes;

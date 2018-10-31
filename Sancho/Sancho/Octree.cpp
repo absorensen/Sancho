@@ -36,35 +36,38 @@ void Octree::subdivide(Settings &settings)
 {
 	_settings = &settings;
 	// s_ms verification
-	if (m_indexes.size() < 9) {
-	//if (m_indexes.size() < (unsigned int)settings.s_ms) {
-		m_is_leaf = true;
-		least_variance_direction();
-		return;
-	}
-	//if (m_indexes.size() < 9) return;
-	if (false)
+	//if (m_indexes.size() < 33) {
+	////if (m_indexes.size() < (unsigned int)settings.s_ms) {
+	//	m_is_leaf = true;
+	//	least_variance_direction();
+	//	return;
+	//}
+	//if(false)
+	if (m_indexes.size() == 0) return;
+	if (m_indexes.size() < 33)
 	//if (m_indexes.size() < settings.max_points_leaf)
 	{
+		m_is_leaf = true;
+
 		// principal component analysis
 		least_variance_direction();
 
 		// plane data
 		Patch patch;
-		patch.plane_dir1[0] = normal1.x();
-		patch.plane_dir1[1] = normal1.y();
-		patch.plane_dir1[2] = normal1.z();
+		patch.plane_norm[0] = normal1.x();
+		patch.plane_norm[1] = normal1.y();
+		patch.plane_norm[2] = normal1.z();
+		patch.plane_norm[3] = 1.0;
+
+		patch.plane_dir1[0] = normal2.x();
+		patch.plane_dir1[1] = normal2.y();
+		patch.plane_dir1[2] = normal2.z();
 		patch.plane_dir1[3] = 1.0;
 
-		patch.plane_dir2[0] = normal2.x();
-		patch.plane_dir2[1] = normal2.y();
-		patch.plane_dir2[2] = normal2.z();
+		patch.plane_dir2[0] = normal3.x();
+		patch.plane_dir2[1] = normal3.y();
+		patch.plane_dir2[2] = normal3.z();
 		patch.plane_dir2[3] = 1.0;
-
-		patch.plane_norm[0] = normal3.x();
-		patch.plane_norm[1] = normal3.y();
-		patch.plane_norm[2] = normal3.z();
-		patch.plane_norm[3] = 1.0;
 
 		double max, mix, may, miy, maz, miz, max_z, min_z;
 		max = mix = may = miy = maz = miz = 0.0;
@@ -72,10 +75,11 @@ void Octree::subdivide(Settings &settings)
 		bool max_z_init = false;
 		bool min_z_init = false;
 
+		// compute plane bounds
 		const int num_points = m_indexes.size();
 		Eigen::Vector4d plane_z_axis_projection;
 		double projection_length;
-		for (unsigned int i = 0; i < m_indexes.size(); ++i) {
+		for (int i = 0; i < num_points; ++i) {
 			max = max > m_root->m_points[m_indexes[i]].x() ? max : m_root->m_points[m_indexes[i]].x();
 			mix = mix < m_root->m_points[m_indexes[i]].x() ? mix : m_root->m_points[m_indexes[i]].x();
 
@@ -105,17 +109,18 @@ void Octree::subdivide(Settings &settings)
 		// re-orient patch with ep1 = n×(1, 0, 0), ep2 = n×ep1, ep3 = n
 		// As the coordinate system’s origin we choose the point cluster’s center of mass.
 		// needs to be tested -
-		Eigen::Vector3d x(1.0, 0.0, 0.0);
-		Eigen::Vector3d n(normal3.x(), normal3.y(), normal3.z());
-		Eigen::Vector3d ep1 = n.cross(x);
-		Eigen::Vector3d ep2 = n.cross(ep1);
-		Eigen::Vector3d ep3 = n;
+		if (_settings->reorient_patches) {
+			Eigen::Vector3d x(1.0, 0.0, 0.0);
+			Eigen::Vector3d n(normal1.x(), normal1.y(), normal1.z());
+			Eigen::Vector3d ep1 = n.cross(x);
+			Eigen::Vector3d ep2 = n.cross(ep1);
+			Eigen::Vector3d ep3 = n;
 
-		patch.origin[0] = m_centroid.x();
-		patch.origin[1] = m_centroid.y();
-		patch.origin[2] = m_centroid.z();
-		patch.origin[3] = m_centroid.w();
-
+			patch.origin[0] = m_centroid.x();
+			patch.origin[1] = m_centroid.y();
+			patch.origin[2] = m_centroid.z();
+			patch.origin[3] = m_centroid.w();
+		}
 
 		// create height map
 
@@ -617,9 +622,10 @@ void Octree::draw_normal(const float length) {
 		_settings->normals_shader->setFloat("z_near", _settings->Z_NEAR);
 		_settings->normals_shader->setFloat("z_far", _settings->Z_FAR);
 		_settings->normals_shader->setFloat("height_of_near_plane", _settings->height_of_near_plane);
+		
 		float vertices[] = {
 			float(m_centroid.x()), float(m_centroid.y()), float(m_centroid.z()), // bottom-left
-			float(m_centroid.x()+normal1.x()), float(m_centroid.y() + normal1.y()), float(m_centroid.z() + normal1.z()) // bottom-right     
+			float(m_centroid.x() + normal1.x()), float(m_centroid.y() + normal1.y()), float(m_centroid.z() + normal1.z()) // bottom-right     
 		};
 
 		glGenVertexArrays(1, &normalVAO);

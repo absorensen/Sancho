@@ -4,7 +4,7 @@
 Settings settings;
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 800;
-const float Z_NEAR = 0.1f;
+const float Z_NEAR = 0.01f;
 const float Z_FAR = 10000.0f;
 const float ASPECT_RATIO = ((float)SCR_WIDTH) / SCR_HEIGHT;
 static const float SCALE = 1.0f / static_cast<float>(SCR_WIDTH);
@@ -68,7 +68,7 @@ int main(int argc, char * argv[]) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_POINT_SMOOTH);
-	glLineWidth(4.0f);
+	glLineWidth(1.0f);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glDepthFunc(GL_LESS);
 	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
@@ -121,8 +121,8 @@ int main(int argc, char * argv[]) {
 	settings.cube_shader = &cube_shader;
 	settings.normals_shader = &normals_shader;
 	settings.patch_planes_shader = &patch_planes_shader;
-	settings.Z_NEAR = 0.1f;
-	settings.Z_FAR = 10000.0f;
+	settings.Z_NEAR = Z_NEAR;
+	settings.Z_FAR = Z_FAR;
 	settings.point_size = _point_size;
 	settings.height_of_near_plane = height_of_near_plane;
 	settings.camera = &camera;
@@ -131,6 +131,7 @@ int main(int argc, char * argv[]) {
 	settings.SCR_WIDTH = SCR_WIDTH;
 	settings.draw_patch_normals = &draw_patch_normals;
 	settings.draw_patch_planes = &draw_patch_planes;
+	settings.reorient_patches = false;
 
 	bool eigentree_path = false;
 	if (eigentree_path) {
@@ -173,7 +174,11 @@ int main(int argc, char * argv[]) {
 		}
 		else {
 			if (draw_patch_planes) tree.show_patch_planes(0.005f);
-			if (draw_patch_normals) tree.show_normals(0.01f);
+			if (draw_patch_normals) {
+				glLineWidth(4.0f);
+				tree.show_normals(0.01f);
+				glLineWidth(1.0f);
+			}
 			if (octree_show_all_levels) tree.show_tree();
 			else tree.show_level(octree_show_level);
 		}
@@ -206,6 +211,10 @@ void process_input(GLFWwindow* window) {
 	
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
 		deltaTimeMod *= 5.0;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+		deltaTimeMod *= 0.05;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
