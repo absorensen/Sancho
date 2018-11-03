@@ -9,13 +9,10 @@ struct Patch {
 	double plane_dir1[4];
 	double plane_dir2[4];
 	double plane_norm[4];
-	double plane_orientation[4];
 	double origin[4];
-	int8_t height_map[16][16];
-	bool occupancy_map[16][16];
 
-	int8_t size;
-	double min_value, max_value;
+	uint8_t size, quant_x, quant_y, quant_z, num_points;
+	float* points;
 };
 
 class Octree {

@@ -76,10 +76,10 @@ void Octree::subdivide(Settings &settings)
 		bool min_z_init = false;
 
 		// compute plane bounds
-		const int num_points = m_indexes.size();
+		patch.num_points = m_indexes.size();
 		Eigen::Vector4d plane_z_axis_projection;
 		double projection_length;
-		for (int i = 0; i < num_points; ++i) {
+		for (int i = 0; i < patch.num_points; ++i) {
 			max = max > m_root->m_points[m_indexes[i]].x() ? max : m_root->m_points[m_indexes[i]].x();
 			mix = mix < m_root->m_points[m_indexes[i]].x() ? mix : m_root->m_points[m_indexes[i]].x();
 
@@ -104,6 +104,11 @@ void Octree::subdivide(Settings &settings)
 
 			max_z = projection_length > max_z ? projection_length : max_z;
 			min_z = projection_length < min_z ? projection_length : min_z;
+
+			patch.origin[0] = (max - mix) * 0.5f;
+			patch.origin[1] = (may - miy) * 0.5f;
+			patch.origin[2] = (maz - miz) * 0.5f;
+			patch.origin[3] = 1.0f;
 		}
 
 		// re-orient patch with ep1 = n×(1, 0, 0), ep2 = n×ep1, ep3 = n
