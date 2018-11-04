@@ -132,6 +132,7 @@ int main(int argc, char * argv[]) {
 	settings.draw_patch_normals = &draw_patch_normals;
 	settings.draw_patch_planes = &draw_patch_planes;
 	settings.reorient_patches = false;
+	settings.bits_reserved_axes = 127;
 
 	bool eigentree_path = false;
 	if (eigentree_path) {

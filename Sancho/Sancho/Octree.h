@@ -11,8 +11,8 @@ struct Patch {
 	double plane_norm[4];
 	double origin[4];
 
-	uint8_t size, quant_x, quant_y, quant_z, num_points;
-	float* points;
+	double quant_x, quant_y, quant_z, num_points;
+	int8_t* points;
 };
 
 class Octree {

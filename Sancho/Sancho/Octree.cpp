@@ -45,7 +45,7 @@ void Octree::subdivide(Settings &settings)
 	//if(false)
 	if (m_indexes.size() == 0) return;
 	if (m_indexes.size() < 33)
-	//if (m_indexes.size() < settings.max_points_leaf)
+		//if (m_indexes.size() < settings.max_points_leaf)
 	{
 		m_is_leaf = true;
 
@@ -57,59 +57,159 @@ void Octree::subdivide(Settings &settings)
 		patch.plane_norm[0] = normal1.x();
 		patch.plane_norm[1] = normal1.y();
 		patch.plane_norm[2] = normal1.z();
-		patch.plane_norm[3] = 1.0;
+		patch.plane_norm[3] = normal1.w();
 
 		patch.plane_dir1[0] = normal2.x();
 		patch.plane_dir1[1] = normal2.y();
 		patch.plane_dir1[2] = normal2.z();
-		patch.plane_dir1[3] = 1.0;
+		patch.plane_dir1[3] = normal2.w();
 
 		patch.plane_dir2[0] = normal3.x();
 		patch.plane_dir2[1] = normal3.y();
 		patch.plane_dir2[2] = normal3.z();
-		patch.plane_dir2[3] = 1.0;
+		patch.plane_dir2[3] = normal3.w();
 
-		double max, mix, may, miy, maz, miz, max_z, min_z;
+		double max, mix, may, miy, maz, miz;
 		max = mix = may = miy = maz = miz = 0.0;
+		double world_space_max, world_space_mix, world_space_may, world_space_miy, world_space_maz, world_space_miz;
+		world_space_max = world_space_mix = world_space_may = world_space_miy = world_space_maz = world_space_miz = 0.0;
 
-		bool max_z_init = false;
-		bool min_z_init = false;
+		//bool max_z_init = false;
+		//bool min_z_init = false;
 
 		// compute plane bounds
 		patch.num_points = m_indexes.size();
 		Eigen::Vector4d plane_z_axis_projection;
+		Eigen::Matrix4d world_space_to_patch_space;
+		world_space_to_patch_space = Eigen::Matrix4d::Identity();
+		world_space_to_patch_space(0, 0) = normal2(0);
+		world_space_to_patch_space(0, 1) = normal2(1);
+		world_space_to_patch_space(0, 2) = normal2(2);
+		world_space_to_patch_space(0, 3) = normal2(3);
+
+		world_space_to_patch_space(1, 0) = normal3(0);
+		world_space_to_patch_space(1, 1) = normal3(1);
+		world_space_to_patch_space(1, 2) = normal3(2);
+		world_space_to_patch_space(1, 3) = normal3(3);
+
+		world_space_to_patch_space(2, 0) = normal1(0);
+		world_space_to_patch_space(2, 1) = normal1(1);
+		world_space_to_patch_space(2, 2) = normal1(2);
+		world_space_to_patch_space(2, 3) = normal1(3);
+
+		float* points = new float[patch.num_points * 3];
+		patch.points = new int8_t[patch.num_points * 3];
+
 		double projection_length;
 		for (int i = 0; i < patch.num_points; ++i) {
-			max = max > m_root->m_points[m_indexes[i]].x() ? max : m_root->m_points[m_indexes[i]].x();
-			mix = mix < m_root->m_points[m_indexes[i]].x() ? mix : m_root->m_points[m_indexes[i]].x();
+			world_space_max = world_space_max > m_root->m_points[m_indexes[i]].x() ? world_space_max : m_root->m_points[m_indexes[i]].x();
+			world_space_mix = world_space_mix < m_root->m_points[m_indexes[i]].x() ? world_space_mix : m_root->m_points[m_indexes[i]].x();
 
-			may = may > m_root->m_points[m_indexes[i]].y() ? may : m_root->m_points[m_indexes[i]].y();
-			miy = miy < m_root->m_points[m_indexes[i]].y() ? miy : m_root->m_points[m_indexes[i]].y();
+			world_space_may = world_space_may > m_root->m_points[m_indexes[i]].y() ? world_space_may : m_root->m_points[m_indexes[i]].y();
+			world_space_miy = world_space_miy < m_root->m_points[m_indexes[i]].y() ? world_space_miy : m_root->m_points[m_indexes[i]].y();
 
-			maz = maz > m_root->m_points[m_indexes[i]].z() ? maz : m_root->m_points[m_indexes[i]].z();
-			miz = miz < m_root->m_points[m_indexes[i]].z() ? miz : m_root->m_points[m_indexes[i]].z();
+			world_space_maz = world_space_maz > m_root->m_points[m_indexes[i]].z() ? world_space_maz : m_root->m_points[m_indexes[i]].z();
+			world_space_miz = world_space_miz < m_root->m_points[m_indexes[i]].z() ? world_space_miz : m_root->m_points[m_indexes[i]].z();
+
+
+			// add point to list patch points
+			// and project into patch coordinate system with
+			// pointOnMatB = matB*(inverseMatA*pointOnMatA)
+			// since our worldspace's coordinate system is the identity matrix
+			// we just need to multiply by our new coordinate system axes
+			Eigen::Vector4d new_point = world_space_to_patch_space * m_root->m_points[m_indexes[i]];
+			points[i * 3] = new_point.x();
+			points[i * 3 + 1] = new_point.y();
+			points[i * 3 + 2] = new_point.z();
+
+			// find boundaries of patch
+			max = max > new_point.x() ? max : new_point.x();
+			mix = mix < new_point.x() ? mix : new_point.x();
+
+			may = may > new_point.y() ? may : new_point.y();
+			miy = miy < new_point.y() ? miy : new_point.y();
+
+			maz = maz > new_point.z() ? maz : new_point.z();
+			miz = miz < new_point.z() ? miz : new_point.z();
+
 
 
 			// use a simple distance function - only works if m_centroid indeed represents the best fitting plane
-			projection_length = signed_plane_distance(m_root->m_points[m_indexes[i]]);
+			// might no longer be needed when point has been projected to patch's coordinate system
+			//projection_length = signed_plane_distance(m_root->m_points[m_indexes[i]]);
 
-			if (!max_z_init) {
-				max_z_init = true;
-				max_z = projection_length;
-			}
-			if (!min_z_init) {
-				min_z_init = true;
-				min_z = projection_length;
-			}
+			//if (!max_z_init) {
+			//	max_z_init = true;
+			//	max_z = projection_length;
+			//}
+			//if (!min_z_init) {
+			//	min_z_init = true;
+			//	min_z = projection_length;
+			//}
 
-			max_z = projection_length > max_z ? projection_length : max_z;
-			min_z = projection_length < min_z ? projection_length : min_z;
+			//max_z = projection_length > max_z ? projection_length : max_z;
+			//min_z = projection_length < min_z ? projection_length : min_z;
 
-			patch.origin[0] = (max - mix) * 0.5f;
-			patch.origin[1] = (may - miy) * 0.5f;
-			patch.origin[2] = (maz - miz) * 0.5f;
-			patch.origin[3] = 1.0f;
+
 		}
+
+		Eigen::Vector4d origin;
+		origin(0) = (max - mix) * 0.5f;
+		origin(1) = (may - miy) * 0.5f;
+		origin(2) = (maz - miz) * 0.5f;
+		origin(3) = 1.0f;
+
+		// translate origin into world space coordinates
+		Eigen::Matrix4d patch_space_to_world_space = world_space_to_patch_space.inverse();
+		origin = patch_space_to_world_space * origin;
+		patch.origin[0] = origin.x();
+		patch.origin[1] = origin.y();
+		patch.origin[2] = origin.z();
+		patch.origin[3] = origin.w();
+
+		origin(0) = (max - mix) * 0.5f;
+		origin(1) = (may - miy) * 0.5f;
+		origin(2) = (maz - miz) * 0.5f;
+		origin(3) = 1.0f;
+
+		// translate all points to be relative to patch origin
+		max = mix = may = miy = maz = miz = 0.0;
+		for (int i = 0; i < patch.num_points; ++i) {
+			points[i * 3] = points[i * 3] - origin.x();
+			points[i * 3 + 1] = points[i * 3 + 1] - origin.y();
+			points[i * 3 + 2] = points[i * 3 + 2] - origin.z();
+
+			max = max > points[i * 3] ? max : points[i * 3];
+			mix = mix < points[i * 3] ? mix : points[i * 3];
+
+			may = may > points[i * 3 + 1] ? may : points[i * 3 + 1];
+			miy = miy < points[i * 3 + 1] ? miy : points[i * 3 + 1];
+
+			maz = maz > points[i * 3 + 2] ? maz : points[i * 3 + 2];
+			miz = miz < points[i * 3 + 2] ? miz : points[i * 3 + 2];
+		}
+
+		// THIS IS WRONG, TRY AND FIND THE TRANSLATION FROM THE MAX VALUE TO 127
+		patch.quant_x = _settings->bits_reserved_axes / std::max(abs(max), abs(mix));
+		patch.quant_y = _settings->bits_reserved_axes / std::max(abs(may), abs(miy));
+		patch.quant_z = _settings->bits_reserved_axes / std::max(abs(maz), abs(miz));
+
+		for (int i = 0; i < patch.num_points; ++i) {
+			patch.points[i * 3] = (int8_t)points[i * 3] * patch.quant_x;
+			patch.points[i * 3 + 1] = (int8_t)points[i * 3 + 1] * patch.quant_y;
+			patch.points[i * 3 + 2] = (int8_t)points[i * 3 + 2] * patch.quant_z;
+		}
+
+		delete[] points;
+
+
+
+
+
+
+
+
+
 
 		// re-orient patch with ep1 = n×(1, 0, 0), ep2 = n×ep1, ep3 = n
 		// As the coordinate system’s origin we choose the point cluster’s center of mass.
@@ -414,7 +514,7 @@ void Octree::draw_points() {
 		glBindVertexArray(pointsVAO);
 
 		glBindBuffer(GL_ARRAY_BUFFER, pointsVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*m_indexes.size()*3, points, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*m_indexes.size() * 3, points, GL_STATIC_DRAW);
 		GLint position_attribute = glGetAttribLocation(_settings->point_shader->ID, "aPos");
 		glVertexAttribPointer(position_attribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
 		glEnableVertexAttribArray(0);
@@ -578,7 +678,7 @@ void Octree::draw_patch_plane(const float size) {
 			float(m_centroid.x() + normal2.x()), float(m_centroid.y() + normal2.y()), float(m_centroid.z() + normal2.z()),
 			float(m_centroid.x() - normal2.x()), float(m_centroid.y() - normal2.y()), float(m_centroid.z() - normal2.z()),
 			float(m_centroid.x() + normal3.x()), float(m_centroid.y() + normal3.y()), float(m_centroid.z() + normal3.z()),
-			
+
 			// triangle 2
 			float(m_centroid.x() + normal2.x()), float(m_centroid.y() + normal2.y()), float(m_centroid.z() + normal2.z()),
 			float(m_centroid.x() - normal2.x()), float(m_centroid.y() - normal2.y()), float(m_centroid.z() - normal2.z()),
@@ -627,7 +727,7 @@ void Octree::draw_normal(const float length) {
 		_settings->normals_shader->setFloat("z_near", _settings->Z_NEAR);
 		_settings->normals_shader->setFloat("z_far", _settings->Z_FAR);
 		_settings->normals_shader->setFloat("height_of_near_plane", _settings->height_of_near_plane);
-		
+
 		float vertices[] = {
 			float(m_centroid.x()), float(m_centroid.y()), float(m_centroid.z()), // bottom-left
 			float(m_centroid.x() + normal1.x()), float(m_centroid.y() + normal1.y()), float(m_centroid.z() + normal1.z()) // bottom-right     

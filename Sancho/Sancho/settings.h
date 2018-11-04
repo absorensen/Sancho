@@ -100,6 +100,8 @@ public:
 
 	bool reorient_patches;
 
+	int bits_reserved_axes;
+
 	bool* draw_patch_normals;
 	bool* draw_patch_planes;
 
