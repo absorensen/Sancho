@@ -75,8 +75,8 @@ int main(int argc, char * argv[]) {
 
 	PointCloud point_cloud;
 	//load_point_cloud("../Cube.txt", 8, 3, point_cloud);
-	load_point_cloud("../stan.txt", 2503, 3, point_cloud);
-	//load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
+	//load_point_cloud("../stan.txt", 2503, 3, point_cloud);
+	load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
 	//load_point_cloud("../Room.txt", 831159, 3, point_cloud);
 	//load_point_cloud("../Box.txt", 964806, 3, point_cloud);
 
@@ -133,6 +133,7 @@ int main(int argc, char * argv[]) {
 	settings.draw_patch_planes = &draw_patch_planes;
 	settings.reorient_patches = false;
 	settings.bits_reserved_axes = 127;
+	settings.max_points_leaf = 33;
 
 	bool eigentree_path = false;
 	if (eigentree_path) {

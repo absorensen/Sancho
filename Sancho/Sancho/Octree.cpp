@@ -44,8 +44,7 @@ void Octree::subdivide(Settings &settings)
 	//}
 	//if(false)
 	if (m_indexes.size() == 0) return;
-	if (m_indexes.size() < 33)
-		//if (m_indexes.size() < settings.max_points_leaf)
+	if (m_indexes.size() < _settings->max_points_leaf)
 	{
 		m_is_leaf = true;
 
@@ -57,147 +56,87 @@ void Octree::subdivide(Settings &settings)
 		patch.plane_norm[0] = normal1.x();
 		patch.plane_norm[1] = normal1.y();
 		patch.plane_norm[2] = normal1.z();
-		patch.plane_norm[3] = normal1.w();
 
 		patch.plane_dir1[0] = normal2.x();
 		patch.plane_dir1[1] = normal2.y();
 		patch.plane_dir1[2] = normal2.z();
-		patch.plane_dir1[3] = normal2.w();
 
 		patch.plane_dir2[0] = normal3.x();
 		patch.plane_dir2[1] = normal3.y();
 		patch.plane_dir2[2] = normal3.z();
-		patch.plane_dir2[3] = normal3.w();
 
 		double max, mix, may, miy, maz, miz;
 		max = mix = may = miy = maz = miz = 0.0;
-		double world_space_max, world_space_mix, world_space_may, world_space_miy, world_space_maz, world_space_miz;
-		world_space_max = world_space_mix = world_space_may = world_space_miy = world_space_maz = world_space_miz = 0.0;
-
-		//bool max_z_init = false;
-		//bool min_z_init = false;
 
 		// compute plane bounds
 		patch.num_points = m_indexes.size();
-		Eigen::Vector4d plane_z_axis_projection;
+
 		Eigen::Matrix4d world_space_to_patch_space;
 		world_space_to_patch_space = Eigen::Matrix4d::Identity();
 		world_space_to_patch_space(0, 0) = normal2(0);
 		world_space_to_patch_space(0, 1) = normal2(1);
 		world_space_to_patch_space(0, 2) = normal2(2);
-		world_space_to_patch_space(0, 3) = normal2(3);
+		world_space_to_patch_space(0, 3) = 0.0;
 
 		world_space_to_patch_space(1, 0) = normal3(0);
 		world_space_to_patch_space(1, 1) = normal3(1);
 		world_space_to_patch_space(1, 2) = normal3(2);
-		world_space_to_patch_space(1, 3) = normal3(3);
+		world_space_to_patch_space(1, 3) = 0.0;
 
 		world_space_to_patch_space(2, 0) = normal1(0);
 		world_space_to_patch_space(2, 1) = normal1(1);
 		world_space_to_patch_space(2, 2) = normal1(2);
-		world_space_to_patch_space(2, 3) = normal1(3);
+		world_space_to_patch_space(2, 3) = 0.0;
 
 		float* points = new float[patch.num_points * 3];
 		patch.points = new int8_t[patch.num_points * 3];
 
-		double projection_length;
-		for (int i = 0; i < patch.num_points; ++i) {
-			world_space_max = world_space_max > m_root->m_points[m_indexes[i]].x() ? world_space_max : m_root->m_points[m_indexes[i]].x();
-			world_space_mix = world_space_mix < m_root->m_points[m_indexes[i]].x() ? world_space_mix : m_root->m_points[m_indexes[i]].x();
+		patch.origin[0] = m_centroid(0);
+		patch.origin[1] = m_centroid(1);
+		patch.origin[2] = m_centroid(2);
 
-			world_space_may = world_space_may > m_root->m_points[m_indexes[i]].y() ? world_space_may : m_root->m_points[m_indexes[i]].y();
-			world_space_miy = world_space_miy < m_root->m_points[m_indexes[i]].y() ? world_space_miy : m_root->m_points[m_indexes[i]].y();
+		Eigen::Vector4d new_point;
+		for (int i = 0, j = 0; j < patch.num_points; i += 3, ++j) {
 
-			world_space_maz = world_space_maz > m_root->m_points[m_indexes[i]].z() ? world_space_maz : m_root->m_points[m_indexes[i]].z();
-			world_space_miz = world_space_miz < m_root->m_points[m_indexes[i]].z() ? world_space_miz : m_root->m_points[m_indexes[i]].z();
+			new_point = world_space_to_patch_space * (m_root->m_points[m_indexes[j]] - m_centroid);
+			points[i] = new_point.x();
+			points[i + 1] = new_point.y();
+			points[i + 2] = new_point.z();
 
+			max = max > points[i] ? max : points[i];
+			mix = mix < points[i] ? mix : points[i];
 
-			// add point to list patch points
-			// and project into patch coordinate system with
-			// pointOnMatB = matB*(inverseMatA*pointOnMatA)
-			// since our worldspace's coordinate system is the identity matrix
-			// we just need to multiply by our new coordinate system axes
-			Eigen::Vector4d new_point = world_space_to_patch_space * m_root->m_points[m_indexes[i]];
-			points[i * 3] = new_point.x();
-			points[i * 3 + 1] = new_point.y();
-			points[i * 3 + 2] = new_point.z();
+			may = may > points[i + 1] ? may : points[i + 1];
+			miy = miy < points[i + 1] ? miy : points[i + 1];
 
-			// find boundaries of patch
-			max = max > new_point.x() ? max : new_point.x();
-			mix = mix < new_point.x() ? mix : new_point.x();
-
-			may = may > new_point.y() ? may : new_point.y();
-			miy = miy < new_point.y() ? miy : new_point.y();
-
-			maz = maz > new_point.z() ? maz : new_point.z();
-			miz = miz < new_point.z() ? miz : new_point.z();
-
-
-
-			// use a simple distance function - only works if m_centroid indeed represents the best fitting plane
-			// might no longer be needed when point has been projected to patch's coordinate system
-			//projection_length = signed_plane_distance(m_root->m_points[m_indexes[i]]);
-
-			//if (!max_z_init) {
-			//	max_z_init = true;
-			//	max_z = projection_length;
-			//}
-			//if (!min_z_init) {
-			//	min_z_init = true;
-			//	min_z = projection_length;
-			//}
-
-			//max_z = projection_length > max_z ? projection_length : max_z;
-			//min_z = projection_length < min_z ? projection_length : min_z;
-
+			maz = maz > points[i + 2] ? maz : points[i + 2];
+			miz = miz < points[i + 2] ? miz : points[i + 2];
 
 		}
+		// is this really correct?
+		// max(x, eps) is due to possible division by zero number
+		// all values that would have been inf are 127000 instead
+		patch.quant_x = _settings->bits_reserved_axes / std::max(std::max(abs(max), abs(mix)), EPS);
+		patch.quant_y = _settings->bits_reserved_axes / std::max(std::max(abs(may), abs(miy)), EPS);
+		patch.quant_z = _settings->bits_reserved_axes / std::max(std::max(abs(maz), abs(miz)), EPS);
 
-		Eigen::Vector4d origin;
-		origin(0) = (max - mix) * 0.5f;
-		origin(1) = (may - miy) * 0.5f;
-		origin(2) = (maz - miz) * 0.5f;
-		origin(3) = 1.0f;
+		//std::cout << "quant x: " << patch.quant_x << std::endl;
+		//std::cout << "quant y: " << patch.quant_y << std::endl;
+		//std::cout << "quant z: " << patch.quant_z << std::endl << std::endl;
 
-		// translate origin into world space coordinates
-		Eigen::Matrix4d patch_space_to_world_space = world_space_to_patch_space.inverse();
-		origin = patch_space_to_world_space * origin;
-		patch.origin[0] = origin.x();
-		patch.origin[1] = origin.y();
-		patch.origin[2] = origin.z();
-		patch.origin[3] = origin.w();
+		const unsigned int no_of_coords = patch.num_points * 3;
+		for (unsigned int i = 0; i < no_of_coords; i += 3) {
+			patch.points[i] = static_cast<int8_t>(points[i] * patch.quant_x);
+			patch.points[i + 1] = static_cast<int8_t>(points[i + 1] * patch.quant_y);
+			patch.points[i + 2] = static_cast<int8_t>(points[i + 2] * patch.quant_z);
 
-		origin(0) = (max - mix) * 0.5f;
-		origin(1) = (may - miy) * 0.5f;
-		origin(2) = (maz - miz) * 0.5f;
-		origin(3) = 1.0f;
+			//std::cout << "quantified point x: " << patch.points[i] << std::endl;
+			//std::cout << "quantified point y: " << patch.points[i + 1] << std::endl;
+			//std::cout << "quantified point z: " << patch.points[i + 2] << std::endl << std::endl;
 
-		// translate all points to be relative to patch origin
-		max = mix = may = miy = maz = miz = 0.0;
-		for (int i = 0; i < patch.num_points; ++i) {
-			points[i * 3] = points[i * 3] - origin.x();
-			points[i * 3 + 1] = points[i * 3 + 1] - origin.y();
-			points[i * 3 + 2] = points[i * 3 + 2] - origin.z();
-
-			max = max > points[i * 3] ? max : points[i * 3];
-			mix = mix < points[i * 3] ? mix : points[i * 3];
-
-			may = may > points[i * 3 + 1] ? may : points[i * 3 + 1];
-			miy = miy < points[i * 3 + 1] ? miy : points[i * 3 + 1];
-
-			maz = maz > points[i * 3 + 2] ? maz : points[i * 3 + 2];
-			miz = miz < points[i * 3 + 2] ? miz : points[i * 3 + 2];
-		}
-
-		// THIS IS WRONG, TRY AND FIND THE TRANSLATION FROM THE MAX VALUE TO 127
-		patch.quant_x = _settings->bits_reserved_axes / std::max(abs(max), abs(mix));
-		patch.quant_y = _settings->bits_reserved_axes / std::max(abs(may), abs(miy));
-		patch.quant_z = _settings->bits_reserved_axes / std::max(abs(maz), abs(miz));
-
-		for (int i = 0; i < patch.num_points; ++i) {
-			patch.points[i * 3] = (int8_t)points[i * 3] * patch.quant_x;
-			patch.points[i * 3 + 1] = (int8_t)points[i * 3 + 1] * patch.quant_y;
-			patch.points[i * 3 + 2] = (int8_t)points[i * 3 + 2] * patch.quant_z;
+			//std::cout << "quantified point x: " << static_cast<int16_t>(patch.points[i]) << std::endl;
+			//std::cout << "quantified point y: " << static_cast<int16_t>(patch.points[i + 1]) << std::endl;
+			//std::cout << "quantified point z: " << static_cast<int16_t>(patch.points[i + 2]) << std::endl << std::endl;
 		}
 
 		delete[] points;
@@ -434,7 +373,7 @@ void Octree::show(int height)
 {
 	height--;
 	if (height == 0) {
-		draw_wire_cube(m_middle, float(m_size));
+		draw_wire_cube(m_middle, static_cast<float>(m_size));
 		return;
 	}
 	if (m_children != NULL)
@@ -455,7 +394,7 @@ void Octree::show_tree() {
 
 void Octree::show()
 {
-	draw_wire_cube(m_middle, float(m_size));
+	draw_wire_cube(m_middle, static_cast<float>(m_size));
 	if (m_children != NULL)
 	{
 		for (short i = 0; i < 8; ++i)
@@ -644,9 +583,9 @@ void Octree::draw_wire_cube(Eigen::Vector4d &middle, float size) {
 		glBindVertexArray(0);
 	}
 
-	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), (float)_settings->SCR_WIDTH / (float)_settings->SCR_HEIGHT, _settings->Z_NEAR, _settings->Z_FAR);
+	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), static_cast<float>(_settings->SCR_WIDTH) / static_cast<float>(_settings->SCR_HEIGHT), _settings->Z_NEAR, _settings->Z_FAR);
 	glm::mat4 view = _settings->camera->GetViewMatrix();
-	glm::vec3 translate(float(middle.x()), float(middle.y()), float(middle.z()));
+	glm::vec3 translate(static_cast<float>(middle.x()), static_cast<float>(middle.y()), static_cast<float>(middle.z()));
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), translate);
 	model = glm::scale(model, glm::vec3(size, size, size));
 	glm::mat4 MVPmatrix = projection * view * model;
@@ -675,14 +614,14 @@ void Octree::draw_patch_plane(const float size) {
 		_settings->patch_planes_shader->setFloat("height_of_near_plane", _settings->height_of_near_plane);
 		float vertices[] = {
 			// triangle 1
-			float(m_centroid.x() + normal2.x()), float(m_centroid.y() + normal2.y()), float(m_centroid.z() + normal2.z()),
-			float(m_centroid.x() - normal2.x()), float(m_centroid.y() - normal2.y()), float(m_centroid.z() - normal2.z()),
-			float(m_centroid.x() + normal3.x()), float(m_centroid.y() + normal3.y()), float(m_centroid.z() + normal3.z()),
+			static_cast<float>(m_centroid.x() + normal2.x()), static_cast<float>(m_centroid.y() + normal2.y()), static_cast<float>(m_centroid.z() + normal2.z()),
+			static_cast<float>(m_centroid.x() - normal2.x()), static_cast<float>(m_centroid.y() - normal2.y()), static_cast<float>(m_centroid.z() - normal2.z()),
+			static_cast<float>(m_centroid.x() + normal3.x()), static_cast<float>(m_centroid.y() + normal3.y()), static_cast<float>(m_centroid.z() + normal3.z()),
 
 			// triangle 2
-			float(m_centroid.x() + normal2.x()), float(m_centroid.y() + normal2.y()), float(m_centroid.z() + normal2.z()),
-			float(m_centroid.x() - normal2.x()), float(m_centroid.y() - normal2.y()), float(m_centroid.z() - normal2.z()),
-			float(m_centroid.x() - normal3.x()), float(m_centroid.y() - normal3.y()), float(m_centroid.z() - normal3.z())
+			static_cast<float>(m_centroid.x() + normal2.x()), static_cast<float>(m_centroid.y() + normal2.y()), static_cast<float>(m_centroid.z() + normal2.z()),
+			static_cast<float>(m_centroid.x() - normal2.x()), static_cast<float>(m_centroid.y() - normal2.y()), static_cast<float>(m_centroid.z() - normal2.z()),
+			static_cast<float>(m_centroid.x() - normal3.x()), static_cast<float>(m_centroid.y() - normal3.y()), static_cast<float>(m_centroid.z() - normal3.z())
 		};
 
 		glGenVertexArrays(1, &planeVAO);
@@ -698,9 +637,9 @@ void Octree::draw_patch_plane(const float size) {
 		glBindVertexArray(0);
 	}
 
-	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), (float)_settings->SCR_WIDTH / (float)_settings->SCR_HEIGHT, _settings->Z_NEAR, _settings->Z_FAR);
+	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), static_cast<float>(_settings->SCR_WIDTH) / static_cast<float>(_settings->SCR_HEIGHT), _settings->Z_NEAR, _settings->Z_FAR);
 	glm::mat4 view = _settings->camera->GetViewMatrix();
-	glm::vec3 translate(float(m_centroid.x()), float(m_centroid.y()), float(m_centroid.z()));
+	glm::vec3 translate(static_cast<float>(m_centroid.x()), static_cast<float>(m_centroid.y()), static_cast<float>(m_centroid.z()));
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), translate);
 	model = glm::scale(model, glm::vec3(size, size, size));
 	glm::mat4 MVPmatrix = projection * view * model;
@@ -729,8 +668,8 @@ void Octree::draw_normal(const float length) {
 		_settings->normals_shader->setFloat("height_of_near_plane", _settings->height_of_near_plane);
 
 		float vertices[] = {
-			float(m_centroid.x()), float(m_centroid.y()), float(m_centroid.z()), // bottom-left
-			float(m_centroid.x() + normal1.x()), float(m_centroid.y() + normal1.y()), float(m_centroid.z() + normal1.z()) // bottom-right     
+			static_cast<float>(m_centroid.x()), static_cast<float>(m_centroid.y()), static_cast<float>(m_centroid.z()), // bottom-left
+			static_cast<float>(m_centroid.x() + normal1.x()), static_cast<float>(m_centroid.y() + normal1.y()), static_cast<float>(m_centroid.z() + normal1.z()) // bottom-right     
 		};
 
 		glGenVertexArrays(1, &normalVAO);
@@ -746,9 +685,9 @@ void Octree::draw_normal(const float length) {
 		glBindVertexArray(0);
 	}
 
-	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), (float)_settings->SCR_WIDTH / (float)_settings->SCR_HEIGHT, _settings->Z_NEAR, _settings->Z_FAR);
+	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), static_cast<float>(_settings->SCR_WIDTH) / static_cast<float>(_settings->SCR_HEIGHT), _settings->Z_NEAR, _settings->Z_FAR);
 	glm::mat4 view = _settings->camera->GetViewMatrix();
-	glm::vec3 translate(float(m_centroid.x()), float(m_centroid.y()), float(m_centroid.z()));
+	glm::vec3 translate(static_cast<float>(m_centroid.x()), static_cast<float>(m_centroid.y()), static_cast<float>(m_centroid.z()));
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), translate);
 	model = glm::scale(model, glm::vec3(length, length, length));
 	glm::mat4 MVPmatrix = projection * view * model;
