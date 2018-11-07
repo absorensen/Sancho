@@ -6,7 +6,7 @@
 #include "Octree.h"
 
 class Octree;
-struct Patch;
+class Patch;
 
 Octree::Octree()
 {
@@ -15,7 +15,6 @@ Octree::Octree()
 	m_children = NULL;
 	m_is_leaf = false;
 }
-
 
 void Octree::clear()
 {
@@ -52,7 +51,7 @@ void Octree::subdivide(Settings &settings)
 		least_variance_direction();
 
 		// plane data
-		Patch patch;
+		Patch patch = new Patch;
 		patch.plane_norm[0] = normal1.x();
 		patch.plane_norm[1] = normal1.y();
 		patch.plane_norm[2] = normal1.z();
@@ -64,9 +63,6 @@ void Octree::subdivide(Settings &settings)
 		patch.plane_dir2[0] = normal3.x();
 		patch.plane_dir2[1] = normal3.y();
 		patch.plane_dir2[2] = normal3.z();
-
-		double max, mix, may, miy, maz, miz;
-		max = mix = may = miy = maz = miz = 0.0;
 
 		// compute plane bounds
 		patch.num_points = m_indexes.size();
@@ -88,15 +84,19 @@ void Octree::subdivide(Settings &settings)
 		world_space_to_patch_space(2, 2) = normal1(2);
 		world_space_to_patch_space(2, 3) = 0.0;
 
-		float* points = new float[patch.num_points * 3];
-		patch.points = new int8_t[patch.num_points * 3];
-
 		patch.origin[0] = m_centroid(0);
 		patch.origin[1] = m_centroid(1);
 		patch.origin[2] = m_centroid(2);
 
+
+		float* points = new float[patch.num_points * 3];
+		patch.points = new int8_t[patch.num_points * 3];
+		
 		Eigen::Vector4d new_point;
-		for (int i = 0, j = 0; j < patch.num_points; i += 3, ++j) {
+
+		double max, mix, may, miy, maz, miz;
+		max = mix = may = miy = maz = miz = 0.0;
+		for (uint8_t i = 0, j = 0; j < patch.num_points; i += 3, ++j) {
 
 			new_point = world_space_to_patch_space * (m_root->m_points[m_indexes[j]] - m_centroid);
 			points[i] = new_point.x();
@@ -141,7 +141,8 @@ void Octree::subdivide(Settings &settings)
 
 		delete[] points;
 
-
+		// PROBLEM AREA
+		//m_root->m_patches.push_back(new Patch(patch));
 
 
 
@@ -349,7 +350,6 @@ double Octree::signed_plane_distance(Eigen::Vector4d &point)
 	return (point - m_centroid).dot(normal1.normalized());
 }
 
-
 void Octree::get_nodes(std::vector< Octree*> &nodes)
 {
 	if (m_children != NULL)
@@ -360,7 +360,6 @@ void Octree::get_nodes(std::vector< Octree*> &nodes)
 		}
 	}
 }
-
 
 void Octree::show_level(int height) {
 	draw_points();
@@ -462,7 +461,7 @@ void Octree::draw_points() {
 		glBindVertexArray(0);
 	}
 
-	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), (float)_settings->SCR_WIDTH / (float)_settings->SCR_HEIGHT, _settings->Z_NEAR, _settings->Z_FAR);
+	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), _settings->ASPECT_RATIO, _settings->Z_NEAR, _settings->Z_FAR);
 	glm::mat4 view = _settings->camera->GetViewMatrix();
 	glm::mat4 model = glm::mat4(1.0f);
 	glm::mat4 MVPmatrix = projection * view * model;
@@ -583,7 +582,7 @@ void Octree::draw_wire_cube(Eigen::Vector4d &middle, float size) {
 		glBindVertexArray(0);
 	}
 
-	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), static_cast<float>(_settings->SCR_WIDTH) / static_cast<float>(_settings->SCR_HEIGHT), _settings->Z_NEAR, _settings->Z_FAR);
+	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), _settings->ASPECT_RATIO, _settings->Z_NEAR, _settings->Z_FAR);
 	glm::mat4 view = _settings->camera->GetViewMatrix();
 	glm::vec3 translate(static_cast<float>(middle.x()), static_cast<float>(middle.y()), static_cast<float>(middle.z()));
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), translate);
@@ -637,7 +636,7 @@ void Octree::draw_patch_plane(const float size) {
 		glBindVertexArray(0);
 	}
 
-	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), static_cast<float>(_settings->SCR_WIDTH) / static_cast<float>(_settings->SCR_HEIGHT), _settings->Z_NEAR, _settings->Z_FAR);
+	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), _settings->ASPECT_RATIO, _settings->Z_NEAR, _settings->Z_FAR);
 	glm::mat4 view = _settings->camera->GetViewMatrix();
 	glm::vec3 translate(static_cast<float>(m_centroid.x()), static_cast<float>(m_centroid.y()), static_cast<float>(m_centroid.z()));
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), translate);
@@ -685,7 +684,7 @@ void Octree::draw_normal(const float length) {
 		glBindVertexArray(0);
 	}
 
-	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), static_cast<float>(_settings->SCR_WIDTH) / static_cast<float>(_settings->SCR_HEIGHT), _settings->Z_NEAR, _settings->Z_FAR);
+	glm::mat4 projection = glm::perspective(glm::radians(_settings->camera->Zoom), _settings->ASPECT_RATIO, _settings->Z_NEAR, _settings->Z_FAR);
 	glm::mat4 view = _settings->camera->GetViewMatrix();
 	glm::vec3 translate(static_cast<float>(m_centroid.x()), static_cast<float>(m_centroid.y()), static_cast<float>(m_centroid.z()));
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), translate);

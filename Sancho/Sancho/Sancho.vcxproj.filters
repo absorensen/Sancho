@@ -77,6 +77,9 @@
     <ClInclude Include="Octree.h">
       <Filter>Header Files\Real-Time Point Cloud Compression</Filter>
     </ClInclude>
+    <ClInclude Include="Patch.h">
+      <Filter>Header Files\Real-Time Point Cloud Compression</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

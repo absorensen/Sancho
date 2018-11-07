@@ -4,15 +4,21 @@
 #include "common_includes.h"
 #include "shader.h"
 
-struct Patch {
-	// article specifies position, orientation and size
-	double plane_dir1[3];
-	double plane_dir2[3];
-	double plane_norm[3];
-	double origin[3];
-	double quant_x, quant_y, quant_z, num_points;
-	int8_t* points;
-};
+#include "Patch.h"
+
+//class Patch {
+//public:
+//	Patch();
+//	~Patch();
+//
+//	// article specifies position, orientation and size
+//	double plane_dir1[3];
+//	double plane_dir2[3];
+//	double plane_norm[3];
+//	double origin[3];
+//	double quant_x, quant_y, quant_z, num_points;
+//	int8_t* points;
+//};
 
 class Octree {
 public:
@@ -20,6 +26,7 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	Octree();
+	//~Octree();
 
 	void subdivide(Settings &settings);
 	void show(int height);
@@ -39,9 +46,9 @@ public:
 	void draw_patch_plane(const float size);
 	Eigen::Matrix3d fast_covariance_matrix();
 
-
 	std::vector<Eigen::Vector4d> m_points, m_colors;
 	std::vector<int> m_indexes;
+	std::vector<Patch> m_patches;
 
 	Eigen::Matrix3d m_covariance;
 	bool m_is_leaf;

@@ -6,7 +6,7 @@ const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 800;
 const float Z_NEAR = 0.01f;
 const float Z_FAR = 10000.0f;
-const float ASPECT_RATIO = ((float)SCR_WIDTH) / SCR_HEIGHT;
+const float ASPECT_RATIO = (static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT));
 static const float SCALE = 1.0f / static_cast<float>(SCR_WIDTH);
 static const float PI = 3.14159265359f;
 static const double key_press_threshold = 0.25;
@@ -75,8 +75,8 @@ int main(int argc, char * argv[]) {
 
 	PointCloud point_cloud;
 	//load_point_cloud("../Cube.txt", 8, 3, point_cloud);
-	//load_point_cloud("../stan.txt", 2503, 3, point_cloud);
-	load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
+	load_point_cloud("../stan.txt", 2503, 3, point_cloud);
+	//load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
 	//load_point_cloud("../Room.txt", 831159, 3, point_cloud);
 	//load_point_cloud("../Box.txt", 964806, 3, point_cloud);
 
