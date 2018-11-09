@@ -139,6 +139,34 @@ void Octree::subdivide(Settings &settings)
 			//std::cout << "quantified point z: " << static_cast<int16_t>(patch.points[i + 2]) << std::endl << std::endl;
 		}
 
+		const bool test_decoding = true;
+		const bool visualize_decoded_point_cloud = true;
+		if (test_decoding) {
+			Eigen::Matrix4d patch_space_to_world_space = world_space_to_patch_space.inverse();
+			Eigen::Vector4d decoded_point, difference_point;
+			double accumulated_error = 0.0;
+			for (unsigned int i = 0, j = 0; i < no_of_coords; i += 3, ++j) {
+				decoded_point.x() = patch.points[i] / patch.quant_x;
+				decoded_point.y() = patch.points[i+1] / patch.quant_y;
+				decoded_point.z() = patch.points[i+2] / patch.quant_z;
+				decoded_point.w() = 1.0;
+
+				// comment in for hilarity
+				//decoded_point = m_centroid + world_space_to_patch_space * decoded_point;
+				decoded_point = m_centroid + patch_space_to_world_space * decoded_point;
+				decoded_point.w() = 1.0;
+				difference_point = m_root->m_points[m_indexes[j]] - decoded_point;
+				difference_point.w() = 0.0;
+				accumulated_error += std::abs(difference_point.norm());
+				if (visualize_decoded_point_cloud) m_root->m_points[m_indexes[j]] = decoded_point;
+			}
+			const double average_error = accumulated_error / patch.num_points;
+			std::cout << "Number of points in node: " << static_cast<int16_t>(patch.num_points) << std::endl;
+			std::cout << "Accumulated error: " << accumulated_error << std::endl;
+			std::cout << "Average error: " << average_error << std::endl << std::endl;
+		}
+
+
 		delete[] points;
 
 		// PROBLEM AREA

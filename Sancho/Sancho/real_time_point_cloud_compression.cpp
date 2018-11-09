@@ -11,13 +11,13 @@ void real_time_point_cloud_compression(PointCloud& points, Octree& tree, Setting
 	// create octree
 	create_octree(settings, tree, points);
 	t.stop();
-	std::cout << "Creating octree: " << t.get_time() << "ms" << std::endl;
+	std::cout << "Creating octree: " << (t.get_time() * 1000.0) << "ms" << std::endl;
 
 	t.start();
 	// build octree
 	tree.subdivide(settings);
 	t.stop();
-	std::cout << "Subdividing octree: " << t.get_time() << "ms" << std::endl;
+	std::cout << "Subdividing octree: " << (t.get_time() * 1000.0) << "ms" << std::endl;
 
 	//// show
 }
