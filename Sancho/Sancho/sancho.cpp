@@ -121,19 +121,7 @@ int main(int argc, char * argv[]) {
 	settings.cube_shader = &cube_shader;
 	settings.normals_shader = &normals_shader;
 	settings.patch_planes_shader = &patch_planes_shader;
-	settings.Z_NEAR = Z_NEAR;
-	settings.Z_FAR = Z_FAR;
-	settings.point_size = _point_size;
-	settings.height_of_near_plane = height_of_near_plane;
-	settings.camera = &camera;
-	settings.ASPECT_RATIO = ASPECT_RATIO;
-	settings.SCR_HEIGHT = SCR_HEIGHT;
-	settings.SCR_WIDTH = SCR_WIDTH;
-	settings.draw_patch_normals = &draw_patch_normals;
-	settings.draw_patch_planes = &draw_patch_planes;
-	settings.reorient_patches = false;
-	settings.bits_reserved_axes = 127;
-	settings.max_points_leaf = 33;
+	set_settings();
 
 	bool eigentree_path = false;
 	if (eigentree_path) {
@@ -157,33 +145,14 @@ int main(int argc, char * argv[]) {
 
 		glClearColor(0.1f, 0.1f, 0.4f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		//glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, Z_NEAR, Z_FAR);
-		//glm::mat4 view = camera.GetViewMatrix();
-		//glm::mat4 model = glm::mat4(1.0f);
-		//glm::mat4 MVPmatrix = projection * view * model;
-
-		//point_cloud_shader.use();
-		//point_cloud_shader.setMat4("mvp_matrix", MVPmatrix);
-		//point_cloud_shader.setVec3("cam_pos", camera.Position);
-		//point_cloud_shader.setFloat("point_size", _point_size);
-
-		//glBindVertexArray(VAO);
-		//glDrawArrays(GL_POINTS, 0, point_cloud.no_of_points);
-
-		if (eigentree_path) {
-			if (octree_show_all_levels) eigen_tree.show();
-			else eigen_tree.show(octree_show_level);
+		if (draw_patch_planes) tree.show_patch_planes(0.005f);
+		if (draw_patch_normals) {
+			glLineWidth(4.0f);
+			tree.show_normals(0.01f);
+			glLineWidth(1.0f);
 		}
-		else {
-			if (draw_patch_planes) tree.show_patch_planes(0.005f);
-			if (draw_patch_normals) {
-				glLineWidth(4.0f);
-				tree.show_normals(0.01f);
-				glLineWidth(1.0f);
-			}
-			if (octree_show_all_levels) tree.show_tree();
-			else tree.show_level(octree_show_level);
-		}
+		if (octree_show_all_levels) tree.show_tree();
+		else tree.show_level(octree_show_level);
 		
 		
 		glBindVertexArray(0);
@@ -316,6 +285,19 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 	camera.ProcessMouseScroll((float)yoffset);
 }
 
-
-
-
+void set_settings() {
+	settings.Z_NEAR = Z_NEAR;
+	settings.Z_FAR = Z_FAR;
+	settings.point_size = _point_size;
+	settings.height_of_near_plane = height_of_near_plane;
+	settings.camera = &camera;
+	settings.ASPECT_RATIO = ASPECT_RATIO;
+	settings.SCR_HEIGHT = SCR_HEIGHT;
+	settings.SCR_WIDTH = SCR_WIDTH;
+	settings.draw_patch_normals = &draw_patch_normals;
+	settings.draw_patch_planes = &draw_patch_planes;
+	settings.reorient_patches = false;
+	settings.bits_reserved_axes = 127;
+	settings.max_points_leaf = 64;
+	settings.easily_decodeable = true;
+}

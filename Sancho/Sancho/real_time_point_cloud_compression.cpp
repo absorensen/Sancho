@@ -7,19 +7,23 @@ double max_distance;
 void real_time_point_cloud_compression(PointCloud& points, Octree& tree, Settings& settings) {
 	Timer t;
 
-	t.start();
 	// create octree
+	t.start();
 	create_octree(settings, tree, points);
 	t.stop();
 	std::cout << "Creating octree: " << (t.get_time() * 1000.0) << "ms" << std::endl;
 
-	t.start();
 	// build octree
+	t.start();
 	tree.subdivide(settings);
 	t.stop();
 	std::cout << "Subdividing octree: " << (t.get_time() * 1000.0) << "ms" << std::endl;
 
-	//// show
+	// print
+	t.start();
+	tree.write_patches_to_file("test.txt");
+	t.stop();
+	std::cout << "Writing compressed file: " << (t.get_time() * 1000.0) << "ms" << std::endl;
 }
 
 void create_octree(Settings &settings, Octree &tree, PointCloud& points) {

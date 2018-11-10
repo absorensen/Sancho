@@ -1,5 +1,7 @@
 #pragma once
 
+#include <fstream>
+
 #include "settings.h"
 #include "common_includes.h"
 #include "shader.h"
@@ -44,15 +46,20 @@ public:
 	void draw_points();
 	void draw_normal(const float length);
 	void draw_patch_plane(const float size);
+	void write_patches_to_file(const std::string file);
+	void add_node_patches_to_vector(std::vector<Patch*> &patches);
+	void print_patch_vector(std::ofstream &file, std::vector<Patch*> &patches);
+	void print_patch(std::ofstream &file, Patch &patch);
 	Eigen::Matrix3d fast_covariance_matrix();
 
 	std::vector<Eigen::Vector4d> m_points, m_colors;
 	std::vector<int> m_indexes;
-	std::vector<Patch> m_patches;
+	//std::vector<Patch> m_patches;
 
 	Eigen::Matrix3d m_covariance;
 	bool m_is_leaf;
 	Octree *m_children, *m_root;
+	Patch m_patch;
 	Settings* _settings;
 	Eigen::Vector4d normal1, normal2, normal3, m_middle;
 	Eigen::Vector4d m_centroid, color;

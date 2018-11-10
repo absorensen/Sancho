@@ -29,11 +29,11 @@ public:
 	};
 
 	// article specifies position, orientation and size
-	double plane_dir1[3];
-	double plane_dir2[3];
-	double plane_norm[3];
-	double origin[3];
-	double quant_x, quant_y, quant_z; 
+	float origin[3];
+	float plane_dir1[3];
+	float plane_dir2[3];
+	float plane_norm[3];
+	float quant_x, quant_y, quant_z; 
 	uint8_t num_points;
 	int8_t* points;
 };

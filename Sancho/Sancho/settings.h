@@ -99,6 +99,7 @@ public:
 	float height_of_near_plane;
 
 	bool reorient_patches;
+	bool easily_decodeable;
 
 	int bits_reserved_axes;
 
