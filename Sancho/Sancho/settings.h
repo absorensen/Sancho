@@ -10,6 +10,8 @@
 #include "camera.h"
 #include "shader.h"
 
+enum MODE {COMPRESS, DECOMPRESS, TEST};
+
 class Settings {
 public:
 
@@ -100,6 +102,7 @@ public:
 
 	bool reorient_patches;
 	bool easily_decodeable;
+	MODE state;
 
 	int bits_reserved_axes;
 

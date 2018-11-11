@@ -8,6 +8,7 @@
 #include "point_cloud_loader.h"
 #include "PointCloud.h"
 #include "real_time_point_cloud_compression.h"
+#include "performance_metrics.h"
 
 // function declarations
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);

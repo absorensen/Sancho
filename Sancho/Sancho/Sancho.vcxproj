@@ -138,6 +138,7 @@
     <ClInclude Include="EigenTree.h" />
     <ClInclude Include="Octree.h" />
     <ClInclude Include="Patch.h" />
+    <ClInclude Include="performance_metrics.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="settings.h" />
     <ClInclude Include="os_timer.h" />

@@ -74,11 +74,38 @@ int main(int argc, char * argv[]) {
 	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
 	PointCloud point_cloud;
-	//load_point_cloud("../Cube.txt", 8, 3, point_cloud);
-	//load_point_cloud("../stan.txt", 2503, 3, point_cloud);
-	load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
-	//load_point_cloud("../Room.txt", 831159, 3, point_cloud);
-	//load_point_cloud("../Box.txt", 964806, 3, point_cloud);
+	PointCloud point_cloud_b;
+	if (settings.state == DECOMPRESS) {
+		load_compressed_point_cloud("test.txt", point_cloud, settings.easily_decodeable);
+	}
+	else if (settings.state == COMPRESS) {
+		//load_point_cloud("../Cube.txt", 8, 3, point_cloud);
+		//load_point_cloud("../stan.txt", 2503, 3, point_cloud);
+		//load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
+		//load_point_cloud("../Room.txt", 831159, 3, point_cloud);
+		//load_point_cloud("../Box.txt", 964806, 3, point_cloud);
+	}
+	else if (settings.state == TEST) {
+		load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
+		load_point_cloud("../Room2.txt", 112586, 3, point_cloud_b);
+		point_cloud_b.points[50] += 0.0003f;
+		point_cloud_b.points[94] += 0.0033f;
+		point_cloud_b.points[105] += 0.03f;
+		point_cloud_b.points[203] += 0.013f;
+		point_cloud_b.points[302] += 0.003f;
+		point_cloud_b.points[305] += 0.0333f;
+		point_cloud_b.points[740] += 0.1233f;
+		point_cloud_b.points[1084] += 0.5553f;
+		point_cloud_b.points[1294] += 0.3943f;
+	}
+
+	std::cout << "A:" << std::endl;
+	std::cout << "Point cloud size: " << point_cloud.size << std::endl;
+	std::cout << "Number of points: " << point_cloud.no_of_points << std::endl;
+
+	std::cout << "B:" << std::endl;
+	std::cout << "Point cloud size: " << point_cloud_b.size << std::endl;
+	std::cout << "Number of points: " << point_cloud_b.no_of_points << std::endl;
 
 	Shader point_cloud_shader("point_cloud.vert","point_cloud.frag");
 
@@ -123,13 +150,14 @@ int main(int argc, char * argv[]) {
 	settings.patch_planes_shader = &patch_planes_shader;
 	set_settings();
 
-	bool eigentree_path = false;
-	if (eigentree_path) {
-		real_time_point_cloud_compression_eigentree(point_cloud, eigen_tree, settings);
-	}
-	else {
+	if (settings.state == COMPRESS) {
 		real_time_point_cloud_compression(point_cloud, tree, settings);
 	}
+
+	if (settings.state == TEST) {
+		psnr(point_cloud, point_cloud_b);
+	}
+
 
 	//Eigen::Vector4d middle(10.0, 12.0, -15.0, 1.0);
 	// Real-Time Point Cloud Compression end
@@ -145,15 +173,33 @@ int main(int argc, char * argv[]) {
 
 		glClearColor(0.1f, 0.1f, 0.4f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		if (draw_patch_planes) tree.show_patch_planes(0.005f);
-		if (draw_patch_normals) {
-			glLineWidth(4.0f);
-			tree.show_normals(0.01f);
-			glLineWidth(1.0f);
+
+		if (settings.state == DECOMPRESS) {
+			// draw point cloud
+			glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), settings.ASPECT_RATIO, Z_NEAR, Z_FAR);
+			glm::mat4 view = camera.GetViewMatrix();
+			glm::mat4 model = glm::mat4(1.0f);
+			glm::mat4 MVPmatrix = projection * view * model;
+
+			point_cloud_shader.use();
+			point_cloud_shader.setMat4("mvp_matrix", MVPmatrix);
+			point_cloud_shader.setVec3("cam_pos", camera.Position);
+			point_cloud_shader.setFloat("point_size", _point_size);
+
+			glBindVertexArray(VAO);
+			glDrawArrays(GL_POINTS, 0, point_cloud.no_of_points);
 		}
-		if (octree_show_all_levels) tree.show_tree();
-		else tree.show_level(octree_show_level);
-		
+		else if (settings.state == COMPRESS) {
+			// draw tree
+			if (draw_patch_planes) tree.show_patch_planes(0.005f);
+			if (draw_patch_normals) {
+				glLineWidth(4.0f);
+				tree.show_normals(0.01f);
+				glLineWidth(1.0f);
+			}
+			if (octree_show_all_levels) tree.show_tree();
+			else tree.show_level(octree_show_level);
+		}
 		
 		glBindVertexArray(0);
 		glfwSwapBuffers(window);
@@ -300,4 +346,5 @@ void set_settings() {
 	settings.bits_reserved_axes = 127;
 	settings.max_points_leaf = 64;
 	settings.easily_decodeable = true;
+	settings.state = TEST;
 }
