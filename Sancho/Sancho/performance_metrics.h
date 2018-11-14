@@ -47,6 +47,17 @@ double rmse(PointCloud &a, PointCloud &b) {
 }
 
 void psnr(PointCloud &a, PointCloud &b) {
-	const double psnr = 20.0;
+	const double psnr_factor = 20.0;
+	const double rmse1 = rmse(a, b);
+	const double rmse2 = rmse(b, a);
+	const double max_rmse = std::max(rmse1, rmse2);
+	const double peak = 
+		std::sqrt(
+			std::pow(a.max[0] - a.min[0], 2) + 
+			std::pow(a.max[1] - a.min[1], 2) + 
+			std::pow(a.max[2] - a.min[2], 2));
+	std::cout << "RMSE1 equals: " << rmse1 << std::endl;
+	std::cout << "RMSE2 equals: " << rmse2 << std::endl;
+	const double psnr = psnr_factor * std::log10(peak / max_rmse);
 	std::cout << "PSNR equals: " << psnr << std::endl;
 }

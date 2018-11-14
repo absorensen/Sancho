@@ -75,7 +75,7 @@ int main(int argc, char * argv[]) {
 
 	PointCloud point_cloud;
 	PointCloud point_cloud_b;
-	settings.state = DECOMPRESS;
+	settings.state = TEST;
 	if (settings.state == DECOMPRESS) {
 		load_compressed_point_cloud("test.bin", point_cloud, settings.easily_decodeable);
 		std::cout << "Point cloud size: " << point_cloud.size << std::endl;
