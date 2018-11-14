@@ -21,7 +21,7 @@ void real_time_point_cloud_compression(PointCloud& points, Octree& tree, Setting
 
 	// print
 	t.start();
-	tree.write_patches_to_file("test.txt");
+	tree.write_patches_to_file("test.bin");
 	t.stop();
 	std::cout << "Writing compressed file: " << (t.get_time() * 1000.0) << "ms" << std::endl;
 }

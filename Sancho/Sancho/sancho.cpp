@@ -75,13 +75,15 @@ int main(int argc, char * argv[]) {
 
 	PointCloud point_cloud;
 	PointCloud point_cloud_b;
-	settings.state = TEST;
+	settings.state = DECOMPRESS;
 	if (settings.state == DECOMPRESS) {
-		load_compressed_point_cloud("test.txt", point_cloud, settings.easily_decodeable);
+		load_compressed_point_cloud("test.bin", point_cloud, settings.easily_decodeable);
+		std::cout << "Point cloud size: " << point_cloud.size << std::endl;
+		std::cout << "Number of points: " << point_cloud.no_of_points << std::endl;
 	}
 	else if (settings.state == COMPRESS) {
 		//load_point_cloud("../Cube.txt", 8, 3, point_cloud);
-		//load_point_cloud("../stan.txt", 2503, 3, point_cloud);
+		load_point_cloud("../stan.txt", 2503, 3, point_cloud);
 		//load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
 		//load_point_cloud("../Room.txt", 831159, 3, point_cloud);
 		//load_point_cloud("../Box.txt", 964806, 3, point_cloud);
@@ -89,6 +91,15 @@ int main(int argc, char * argv[]) {
 	else if (settings.state == TEST) {
 		load_point_cloud("../stan.txt", 2503, 3, point_cloud);
 		load_point_cloud("../stan.txt", 2503, 3, point_cloud_b);
+
+		std::cout << "A:" << std::endl;
+		std::cout << "Point cloud size: " << point_cloud.size << std::endl;
+		std::cout << "Number of points: " << point_cloud.no_of_points << std::endl;
+
+		std::cout << "B:" << std::endl;
+		std::cout << "Point cloud size: " << point_cloud_b.size << std::endl;
+		std::cout << "Number of points: " << point_cloud_b.no_of_points << std::endl;
+
 		point_cloud_b.points[50] += 0.0003f;
 		point_cloud_b.points[94] += 0.0033f;
 		point_cloud_b.points[105] += 0.03f;
@@ -99,14 +110,6 @@ int main(int argc, char * argv[]) {
 		point_cloud_b.points[1084] += 0.5553f;
 		point_cloud_b.points[1294] += 0.3943f;
 	}
-
-	std::cout << "A:" << std::endl;
-	std::cout << "Point cloud size: " << point_cloud.size << std::endl;
-	std::cout << "Number of points: " << point_cloud.no_of_points << std::endl;
-
-	std::cout << "B:" << std::endl;
-	std::cout << "Point cloud size: " << point_cloud_b.size << std::endl;
-	std::cout << "Number of points: " << point_cloud_b.no_of_points << std::endl;
 
 	Shader point_cloud_shader("point_cloud.vert","point_cloud.frag");
 
@@ -346,6 +349,5 @@ void set_settings() {
 	settings.reorient_patches = false;
 	settings.bits_reserved_axes = 127;
 	settings.max_points_leaf = 64;
-	settings.easily_decodeable = true;
-	settings.state = TEST;
+	settings.easily_decodeable = false;
 }

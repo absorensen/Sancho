@@ -7,4 +7,6 @@ struct PointCloud {
 	unsigned int no_of_points;
 	unsigned int no_of_coords;
 	unsigned int size;
+	float max[3] = new float[3];
+	float min[3] = new float[3];
 };

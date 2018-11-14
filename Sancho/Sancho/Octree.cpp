@@ -33,11 +33,12 @@ void Octree::clear()
 
 void Octree::write_patches_to_file(const std::string file_name) {
 	std::ofstream file;
-	file.open(file_name.c_str());
+	if(_settings->easily_decodeable) file.open(file_name.c_str());
+	else file.open(file_name.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
 	std::vector<Patch*> patches;
 	add_node_patches_to_vector(patches);
 	print_patch_vector(file, patches);
-	file << "E";
+	//file << "E";
 	file.close();
 }
 
@@ -86,38 +87,38 @@ void Octree::print_patch(std::ofstream &file, Patch &patch) {
 		file << "\n";
 	} else {
 		// origin
-		file << patch.origin[0];
-		file << patch.origin[1];
-		file << patch.origin[2];
+		file.write((char*)&(patch.origin[0]), sizeof(patch.origin[0]));
+		file.write((char*)&(patch.origin[1]), sizeof(patch.origin[1]));
+		file.write((char*)&(patch.origin[2]), sizeof(patch.origin[2]));
 
 		// plane dir1
-		file << patch.plane_dir1[0];
-		file << patch.plane_dir1[1];
-		file << patch.plane_dir1[2];
+		file.write((char*)&(patch.plane_dir1[0]), sizeof(patch.plane_dir1[0]));
+		file.write((char*)&(patch.plane_dir1[1]), sizeof(patch.plane_dir1[1]));
+		file.write((char*)&(patch.plane_dir1[2]), sizeof(patch.plane_dir1[2]));
 
 		// plane dir2
-		file << patch.plane_dir2[0];
-		file << patch.plane_dir2[1];
-		file << patch.plane_dir2[2];
+		file.write((char*)&(patch.plane_dir2[0]), sizeof(patch.plane_dir2[0]));
+		file.write((char*)&(patch.plane_dir2[1]), sizeof(patch.plane_dir2[1]));
+		file.write((char*)&(patch.plane_dir2[2]), sizeof(patch.plane_dir2[2]));
 
 		// plane norm
-		file << patch.plane_norm[0];
-		file << patch.plane_norm[1];
-		file << patch.plane_norm[2];
+		file.write((char*)&(patch.plane_norm[0]), sizeof(patch.plane_norm[0]));
+		file.write((char*)&(patch.plane_norm[1]), sizeof(patch.plane_norm[1]));		
+		file.write((char*)&(patch.plane_norm[2]), sizeof(patch.plane_norm[2]));
 
 		// quants
-		file << patch.quant_x;
-		file << patch.quant_y;
-		file << patch.quant_z;
+		file.write((char*)&(patch.quant_x), sizeof(patch.quant_x));
+		file.write((char*)&(patch.quant_y), sizeof(patch.quant_y));
+		file.write((char*)&(patch.quant_z), sizeof(patch.quant_z));
 
 		// number of points
-		file << patch.num_points;
+		file.write((char*)&(patch.num_points), sizeof(patch.num_points));
 
 		const int num_coords = 3 * patch.num_points;
 		for (int i = 0; i < num_coords; ++i) {
-			file << patch.points[i];
+			file.write((char*)&(patch.points[i]), sizeof(patch.points[i]));
 		}
-		file << "\n";
+		//file << "\n";
 	}
 }
 
