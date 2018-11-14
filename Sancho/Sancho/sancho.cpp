@@ -75,6 +75,7 @@ int main(int argc, char * argv[]) {
 
 	PointCloud point_cloud;
 	PointCloud point_cloud_b;
+	settings.state = TEST;
 	if (settings.state == DECOMPRESS) {
 		load_compressed_point_cloud("test.txt", point_cloud, settings.easily_decodeable);
 	}
@@ -86,8 +87,8 @@ int main(int argc, char * argv[]) {
 		//load_point_cloud("../Box.txt", 964806, 3, point_cloud);
 	}
 	else if (settings.state == TEST) {
-		load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
-		load_point_cloud("../Room2.txt", 112586, 3, point_cloud_b);
+		load_point_cloud("../stan.txt", 2503, 3, point_cloud);
+		load_point_cloud("../stan.txt", 2503, 3, point_cloud_b);
 		point_cloud_b.points[50] += 0.0003f;
 		point_cloud_b.points[94] += 0.0033f;
 		point_cloud_b.points[105] += 0.03f;
