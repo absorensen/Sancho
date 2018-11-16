@@ -48,8 +48,9 @@ public:
 	void draw_patch_plane(const float size);
 	void write_patches_to_file(const std::string file);
 	void add_node_patches_to_vector(std::vector<Patch*> &patches);
-	void print_patch_vector(std::ofstream &file, std::vector<Patch*> &patches);
 	void print_patch(std::ofstream &file, Patch &patch);
+	void leaf_distribution();
+	void get_leaf_counts(std::map<int, float> &dist);
 	Eigen::Matrix3d fast_covariance_matrix();
 
 	std::vector<Eigen::Vector4d> m_points, m_colors;

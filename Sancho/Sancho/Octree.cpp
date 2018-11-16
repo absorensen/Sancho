@@ -49,12 +49,49 @@ void Octree::write_patches_to_file(const std::string file_name) {
 	file.close();
 }
 
-//void Octree::print_patch_vector(std::ofstream &file, std::vector<Patch*> &patches) {
-//	const int size = patches.size();
-//	for (int i = 0; i < size; ++i) {
-//		print_patch(file, *patches[i]);
-//	}
-//}
+void Octree::leaf_distribution() {
+	std::map<int, float> dist;
+	std::cout << "Leaf distribution: " << std::endl;
+	std::ofstream file;
+	file.open("prob_dist.txt", std::ios::out | std::ios::trunc);
+	get_leaf_counts(dist);
+	float sum = 0.0f;
+	const int max_points = _settings->max_points_leaf;
+	for (int i = 0; i <= max_points; ++i) {
+		if (dist.count(i) > 0) {
+			sum += dist.at(i);
+		}
+	}
+	sum = 1.0f / sum;
+	for (int i = 0; i <= max_points; ++i) {
+		if (dist.count(i) > 0) {
+			std::cout << i << " points with probability: " << dist.at(i) * sum << std::endl;
+			file << i << " " << dist.at(i) * sum << "\n";
+		}
+		else {
+			file << i << " " << "0" << "\n";
+		}
+	}
+	file.close();
+}
+
+void Octree::get_leaf_counts(std::map<int, float> &dist) {
+	if (m_is_leaf) {
+
+		if (dist.find(m_indexes.size()) == dist.end()) {
+			dist[m_indexes.size()] = 0.0f;
+		}
+		dist[m_indexes.size()] = dist[m_indexes.size()] + 1.0f;
+		return;
+	}
+	if (m_children != NULL)
+	{
+		for (short i = 0; i < 8; ++i)
+		{
+			m_children[i].get_leaf_counts(dist);
+		}
+	}
+}
 
 void Octree::print_patch(std::ofstream &file, Patch &patch) {
 	

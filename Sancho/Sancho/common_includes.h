@@ -15,6 +15,7 @@
 #include <vector>
 #include <Windows.h>
 #include <algorithm>
+#include <map>
 
 // local files
 #include "os_timer.h"
