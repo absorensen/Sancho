@@ -75,7 +75,7 @@ int main(int argc, char * argv[]) {
 
 	PointCloud point_cloud;
 	PointCloud point_cloud_b;
-	settings.state = COMPRESS;
+	settings.state = DECOMPRESS;
 	if (settings.state == DECOMPRESS) {
 		load_point_cloud_from_binary("Room2.bin", point_cloud);
 		//load_compressed_point_cloud("test.bin", point_cloud, settings.easily_decodeable);

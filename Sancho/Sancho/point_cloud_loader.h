@@ -231,6 +231,7 @@ void load_point_cloud_from_binary(const std::string file_name, PointCloud &point
 	file.read((char*)&point_cloud.size, sizeof(int));
 	point_cloud.no_of_coords = 3;
 	point_cloud.no_of_points = point_cloud.size / point_cloud.no_of_coords;
+	point_cloud.points = new float[point_cloud.size];
 	auto float_size = sizeof(float);
 	for (int i = 0; i < point_cloud.size; ++i) {
 		file.read((char*)&point_cloud.points[i], float_size);
