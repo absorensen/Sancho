@@ -33,21 +33,28 @@ void Octree::clear()
 
 void Octree::write_patches_to_file(const std::string file_name) {
 	std::ofstream file;
-	if(_settings->easily_decodeable) file.open(file_name.c_str());
-	else file.open(file_name.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+	if (_settings->easily_decodeable) { 
+		file.open(file_name.c_str());
+	}
+	else {
+		file.open(file_name.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+	}
 	std::vector<Patch*> patches;
 	add_node_patches_to_vector(patches);
-	print_patch_vector(file, patches);
-	//file << "E";
-	file.close();
-}
-
-void Octree::print_patch_vector(std::ofstream &file, std::vector<Patch*> &patches) {
 	const int size = patches.size();
 	for (int i = 0; i < size; ++i) {
 		print_patch(file, *patches[i]);
 	}
+	//file << "E";
+	file.close();
 }
+
+//void Octree::print_patch_vector(std::ofstream &file, std::vector<Patch*> &patches) {
+//	const int size = patches.size();
+//	for (int i = 0; i < size; ++i) {
+//		print_patch(file, *patches[i]);
+//	}
+//}
 
 void Octree::print_patch(std::ofstream &file, Patch &patch) {
 	
@@ -86,39 +93,74 @@ void Octree::print_patch(std::ofstream &file, Patch &patch) {
 		}
 		file << "\n";
 	} else {
+		//// origin
+		//file.write((char*)&(patch.origin[0]), sizeof(patch.origin[0]));
+		//file.write((char*)&(patch.origin[1]), sizeof(patch.origin[1]));
+		//file.write((char*)&(patch.origin[2]), sizeof(patch.origin[2]));
+
+		//// plane dir1
+		//file.write((char*)&(patch.plane_dir1[0]), sizeof(patch.plane_dir1[0]));
+		//file.write((char*)&(patch.plane_dir1[1]), sizeof(patch.plane_dir1[1]));
+		//file.write((char*)&(patch.plane_dir1[2]), sizeof(patch.plane_dir1[2]));
+
+		//// plane dir2
+		//file.write((char*)&(patch.plane_dir2[0]), sizeof(patch.plane_dir2[0]));
+		//file.write((char*)&(patch.plane_dir2[1]), sizeof(patch.plane_dir2[1]));
+		//file.write((char*)&(patch.plane_dir2[2]), sizeof(patch.plane_dir2[2]));
+
+		//// plane norm
+		//file.write((char*)&(patch.plane_norm[0]), sizeof(patch.plane_norm[0]));
+		//file.write((char*)&(patch.plane_norm[1]), sizeof(patch.plane_norm[1]));		
+		//file.write((char*)&(patch.plane_norm[2]), sizeof(patch.plane_norm[2]));
+
+		//// quants
+		//file.write((char*)&(patch.quant_x), sizeof(patch.quant_x));
+		//file.write((char*)&(patch.quant_y), sizeof(patch.quant_y));
+		//file.write((char*)&(patch.quant_z), sizeof(patch.quant_z));
+
+		//// number of points
+		//file.write((char*)&(patch.num_points), sizeof(patch.num_points));
+
+		//const int num_coords = 3 * patch.num_points;
+		//for (int i = 0; i < num_coords; ++i) {
+		//	file.write((char*)&(patch.points[i]), sizeof(patch.points[i]));
+		//}
+		//file << "\n";
+
 		// origin
-		file.write((char*)&(patch.origin[0]), sizeof(patch.origin[0]));
-		file.write((char*)&(patch.origin[1]), sizeof(patch.origin[1]));
-		file.write((char*)&(patch.origin[2]), sizeof(patch.origin[2]));
+		file.write((char*)&patch.origin[0], sizeof(float));
+		file.write((char*)&patch.origin[1], sizeof(float));
+		file.write((char*)&patch.origin[2], sizeof(float));
 
 		// plane dir1
-		file.write((char*)&(patch.plane_dir1[0]), sizeof(patch.plane_dir1[0]));
-		file.write((char*)&(patch.plane_dir1[1]), sizeof(patch.plane_dir1[1]));
-		file.write((char*)&(patch.plane_dir1[2]), sizeof(patch.plane_dir1[2]));
+		file.write((char*)&patch.plane_dir1[0], sizeof(float));
+		file.write((char*)&patch.plane_dir1[1], sizeof(float));
+		file.write((char*)&patch.plane_dir1[2], sizeof(float));
 
 		// plane dir2
-		file.write((char*)&(patch.plane_dir2[0]), sizeof(patch.plane_dir2[0]));
-		file.write((char*)&(patch.plane_dir2[1]), sizeof(patch.plane_dir2[1]));
-		file.write((char*)&(patch.plane_dir2[2]), sizeof(patch.plane_dir2[2]));
+		file.write((char*)&patch.plane_dir2[0], sizeof(float));
+		file.write((char*)&patch.plane_dir2[1], sizeof(float));
+		file.write((char*)&patch.plane_dir2[2], sizeof(float));
 
 		// plane norm
-		file.write((char*)&(patch.plane_norm[0]), sizeof(patch.plane_norm[0]));
-		file.write((char*)&(patch.plane_norm[1]), sizeof(patch.plane_norm[1]));		
-		file.write((char*)&(patch.plane_norm[2]), sizeof(patch.plane_norm[2]));
+		file.write((char*)&patch.plane_norm[0], sizeof(float));
+		file.write((char*)&patch.plane_norm[1], sizeof(float));
+		file.write((char*)&patch.plane_norm[2], sizeof(float));
 
 		// quants
-		file.write((char*)&(patch.quant_x), sizeof(patch.quant_x));
-		file.write((char*)&(patch.quant_y), sizeof(patch.quant_y));
-		file.write((char*)&(patch.quant_z), sizeof(patch.quant_z));
+		file.write((char*)&patch.quant_x, sizeof(float));
+		file.write((char*)&patch.quant_y, sizeof(float));
+		file.write((char*)&patch.quant_z, sizeof(float));
 
 		// number of points
-		file.write((char*)&(patch.num_points), sizeof(patch.num_points));
+		file.write((char*)&patch.num_points, sizeof(uint8_t));
 
 		const int num_coords = 3 * patch.num_points;
 		for (int i = 0; i < num_coords; ++i) {
-			file.write((char*)&(patch.points[i]), sizeof(patch.points[i]));
+			file.write((char*)&patch.points[i], sizeof(int8_t));
 		}
-		//file << "\n";
+
+
 	}
 }
 
@@ -273,39 +315,6 @@ void Octree::subdivide(Settings &settings)
 
 
 		delete[] points;
-
-		// PROBLEM AREA
-		//m_root->m_patches.push_back(new Patch(patch));
-
-
-
-
-
-
-
-
-		// re-orient patch with ep1 = n×(1, 0, 0), ep2 = n×ep1, ep3 = n
-		// As the coordinate system’s origin we choose the point cluster’s center of mass.
-		// needs to be tested -
-		if (_settings->reorient_patches) {
-			Eigen::Vector3d x(1.0, 0.0, 0.0);
-			Eigen::Vector3d n(normal1.x(), normal1.y(), normal1.z());
-			Eigen::Vector3d ep1 = n.cross(x);
-			Eigen::Vector3d ep2 = n.cross(ep1);
-			Eigen::Vector3d ep3 = n;
-
-			m_patch.origin[0] = static_cast<float>(m_centroid.x());
-			m_patch.origin[1] = static_cast<float>(m_centroid.y());
-			m_patch.origin[2] = static_cast<float>(m_centroid.z());
-			m_patch.origin[3] = static_cast<float>(m_centroid.w());
-		}
-
-		// create height map
-
-		// create occlusion map
-
-
-
 		return;
 	}
 

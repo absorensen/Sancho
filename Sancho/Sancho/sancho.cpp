@@ -75,18 +75,20 @@ int main(int argc, char * argv[]) {
 
 	PointCloud point_cloud;
 	PointCloud point_cloud_b;
-	settings.state = TEST;
+	settings.state = COMPRESS;
 	if (settings.state == DECOMPRESS) {
-		load_compressed_point_cloud("test.bin", point_cloud, settings.easily_decodeable);
+		load_point_cloud_from_binary("Room2.bin", point_cloud);
+		//load_compressed_point_cloud("test.bin", point_cloud, settings.easily_decodeable);
 		std::cout << "Point cloud size: " << point_cloud.size << std::endl;
 		std::cout << "Number of points: " << point_cloud.no_of_points << std::endl;
 	}
 	else if (settings.state == COMPRESS) {
 		//load_point_cloud("../Cube.txt", 8, 3, point_cloud);
-		load_point_cloud("../stan.txt", 2503, 3, point_cloud);
-		//load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
+		//load_point_cloud("../stan.txt", 2503, 3, point_cloud);
+		load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
 		//load_point_cloud("../Room.txt", 831159, 3, point_cloud);
 		//load_point_cloud("../Box.txt", 964806, 3, point_cloud);
+		write_point_cloud_to_binary("Room2.bin", point_cloud);
 	}
 	else if (settings.state == TEST) {
 		load_point_cloud("../stan.txt", 2503, 3, point_cloud);
