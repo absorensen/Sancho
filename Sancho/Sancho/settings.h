@@ -10,7 +10,8 @@
 #include "camera.h"
 #include "shader.h"
 
-enum MODE {COMPRESS, DECOMPRESS, TEST};
+enum STATE {COMPRESS, DECOMPRESS, TEST};
+enum COMP_MODE { A, B, C, D };
 
 class Settings {
 public:
@@ -101,10 +102,11 @@ public:
 	float height_of_near_plane;
 
 	bool reorient_patches;
-	bool easily_decodeable;
-	MODE state;
+	COMP_MODE comp_mode;
+	STATE state;
 
 	int bits_reserved_axes;
+	int min_points;
 
 	bool* draw_patch_normals;
 	bool* draw_patch_planes;

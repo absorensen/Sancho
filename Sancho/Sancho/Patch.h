@@ -36,4 +36,5 @@ public:
 	float quant_x, quant_y, quant_z; 
 	uint8_t num_points;
 	int8_t* points;
+	float* non_compressible_points;
 };
