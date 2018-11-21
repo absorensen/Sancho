@@ -26,7 +26,6 @@ void load_point_cloud(const std::string path, const unsigned int no_of_points, c
 	for (int i = 0, j = 0; i < size; ++i, ++j) {
 		infile >> point_cloud.points[i];
 
-		// ISSUES HERE
 		if (point_cloud.points[i] > point_cloud.max[j] || point_cloud.max[j] == 0.0f) point_cloud.max[j] = point_cloud.points[i];
 		if (point_cloud.points[i] < point_cloud.min[j] || point_cloud.min[j] == 0.0f) point_cloud.min[j] = point_cloud.points[i];
 		j = j % 3;
@@ -176,12 +175,12 @@ void decode_patch_b(std::queue<float> &points, Patch &patch) {
 	origin(2) = patch.origin[2]; origin(3) = 1.0;
 
 	for (unsigned int i = 0; i < no_of_coords; i += 3) {
-		decoded_point.x() = patch.points[i] / patch.quant_x;
-		decoded_point.y() = patch.points[i + 1] / patch.quant_y;
-		decoded_point.z() = patch.points[i + 2] / patch.quant_z;
+		decoded_point.x() = static_cast<double>(patch.points[i]) / patch.quant_x;
+		decoded_point.y() = static_cast<double>(patch.points[i + 1]) / patch.quant_y;
+		decoded_point.z() = static_cast<double>(patch.points[i + 2]) / patch.quant_z;
 		decoded_point.w() = 1.0;
 
-		decoded_point = origin + decoded_point;
+		decoded_point = decoded_point + origin;
 		points.push(decoded_point(0));
 		points.push(decoded_point(1));
 		points.push(decoded_point(2));
@@ -388,9 +387,9 @@ void load_compressed_d(const std::string path, const std::string path_b, PointCl
 	} while (!file.eof());
 	file.close();
 
-	//std::ifstream file_b(path_b.c_str(), std::ios::in | std::ios::binary);
-	//load_uncompressed_d(file_b, points);
-	//file_b.close();
+	std::ifstream file_b(path_b.c_str(), std::ios::in | std::ios::binary);
+	load_uncompressed_d(file_b, points);
+	file_b.close();
 
 	point_cloud.no_of_coords = 3;
 	point_cloud.size = points.size();
@@ -414,23 +413,10 @@ void load_compressed_point_cloud(const std::string path, const std::string path_
 	std::cout << "Loading Compressed Point Cloud...." << std::endl;
 	std::cout << "File: " << path.c_str() << std::endl;
 
-	switch (comp_mode) {
-	case(A):
-		load_compressed_a(path, point_cloud);
-		break;
-	case(B):
-		load_compressed_b(path, point_cloud);
-		break;
-	case(C):
-		load_compressed_c(path, path_b, point_cloud);
-		break;
-	case(D):
-		load_compressed_d(path, path_b, point_cloud);
-		break;
-
-	default:
-		break;
-	}
+	if (comp_mode == A) { load_compressed_a(path, point_cloud); }
+	else if (comp_mode == B) { load_compressed_b(path, point_cloud); }
+	else if (comp_mode == C) { load_compressed_c(path, path_b, point_cloud); }
+	else if(comp_mode == D) { load_compressed_d(path, path_b, point_cloud); }
 }
 
 void write_point_cloud_to_binary(const std::string file_name, PointCloud &point_cloud) {

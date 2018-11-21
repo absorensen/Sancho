@@ -158,6 +158,7 @@ void Octree::print_patch_a(std::ofstream &file, Patch &patch) {
 }
 
 void Octree::print_patch_b(std::ofstream &file, Patch &patch) {
+	if (patch.num_points == 0) return;
 	// origin
 	file.write((char*)&patch.origin[0], sizeof(float));
 	file.write((char*)&patch.origin[1], sizeof(float));
@@ -351,10 +352,11 @@ void Octree::calculate_patch_b() {
 
 	// compute plane bounds
 	m_patch.num_points = static_cast<uint8_t>(m_indexes.size());
+	if (m_patch.num_points == 0) return;
 
-	m_patch.origin[0] = m_centroid(0);
-	m_patch.origin[1] = m_centroid(1);
-	m_patch.origin[2] = m_centroid(2);
+	m_patch.origin[0] = m_centroid.x();
+	m_patch.origin[1] = m_centroid.y();
+	m_patch.origin[2] = m_centroid.z();
 
 	float* points = new float[m_patch.num_points * 3];
 	m_patch.points = new int8_t[m_patch.num_points * 3];

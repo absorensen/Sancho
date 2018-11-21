@@ -76,6 +76,7 @@ int main(int argc, char * argv[]) {
 	PointCloud point_cloud;
 	PointCloud point_cloud_b;
 	settings.state = DECOMPRESS;
+	settings.comp_mode = D;
 	if (settings.state == DECOMPRESS) {
 		//load_point_cloud_from_binary("Room2.bin", point_cloud);
 		load_compressed_point_cloud("test.bin", "testB.bin", point_cloud, settings.comp_mode);
@@ -359,5 +360,4 @@ void set_settings() {
 	settings.bits_reserved_axes = 127;
 	settings.max_points_leaf = 32;
 	settings.min_points = 4;
-	settings.comp_mode = D;
 }
