@@ -23,9 +23,12 @@ public:
 		points = to_copy->points;
 	};
 	~Patch() {
-		if (points != nullptr) {
-			delete points;
-		}
+		//if (points != nullptr) {
+		//	delete[] points;
+		//}
+		//if (non_compressible_points != nullptr) {
+		//	delete[] non_compressible_points;
+		//}
 	};
 
 	// article specifies position, orientation and size
@@ -35,6 +38,6 @@ public:
 	float plane_norm[3];
 	float quant_x, quant_y, quant_z; 
 	uint8_t num_points;
-	int8_t* points;
-	float* non_compressible_points;
+	int8_t* points = nullptr;
+	float* non_compressible_points = nullptr;
 };

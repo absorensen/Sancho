@@ -58,6 +58,7 @@ void Octree::write_patches_to_file(const std::string file_name, const std::strin
 		for (int i = 0; i < size; ++i) {
 			print_patch_c(file, file_b, *patches[i]);
 		}
+		file_b.close();
 		break;
 
 	// both
@@ -66,14 +67,12 @@ void Octree::write_patches_to_file(const std::string file_name, const std::strin
 		for (int i = 0; i < size; ++i) {
 			print_patch_d(file, file_b, *patches[i]);
 		}
+		file_b.close();
 		break;
 
 	default:
 		break;
 	}
-
-	//file << "E";
-	if (_settings->comp_mode == C || _settings->comp_mode == D) file_b.close();
 
 	file.close();
 }

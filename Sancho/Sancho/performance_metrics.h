@@ -51,16 +51,18 @@ void psnr(PointCloud &a, PointCloud &b) {
 	const double rmse1 = rmse(a, b);
 	const double rmse2 = rmse(b, a);
 	const double max_rmse = std::max(rmse1, rmse2);
-	const double peak = 
-		std::sqrt(
-			std::pow(a.max[0] - a.min[0], 2.0) +
-			std::pow(a.max[1] - a.min[1], 2.0) +
-			std::pow(a.max[2] - a.min[2], 2.0));
+	const double x = b.max[0] - b.min[0];
+	const double y = b.max[1] - b.min[1];
+	const double z = b.max[2] - b.min[2];
+	std::cout << "x: " << x << std::endl;
+	std::cout << "y: " << y << std::endl;
+	std::cout << "z: " << z << std::endl;
+	const double peak =	std::sqrt(x * x + y * y + z * z);
 	std::cout << "Peak equals: " << peak << std::endl;
 	std::cout << "RMSE1 equals: " << rmse1 << std::endl;
 	std::cout << "RMSE2 equals: " << rmse2 << std::endl;
 	std::cout << "Max RMSE equals: " << max_rmse << std::endl;
-	std::cout << "rmse over peak: " << max_rmse / peak << std::endl;
-	const double psnr = psnr_factor * std::log10(max_rmse/peak);
+	std::cout << "rmse over peak: " << peak / max_rmse << std::endl;
+	const double psnr = psnr_factor * std::log10(peak / max_rmse);
 	std::cout << "PSNR equals: " << psnr << std::endl;
 }

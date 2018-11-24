@@ -75,11 +75,11 @@ int main(int argc, char * argv[]) {
 
 	PointCloud point_cloud;
 	PointCloud point_cloud_b;
-	settings.state = DECOMPRESS;
+	settings.state = TEST;
 	settings.comp_mode = D;
 	if (settings.state == DECOMPRESS) {
 		//load_point_cloud_from_binary("Room2.bin", point_cloud);
-		load_compressed_point_cloud("test.bin", "testB.bin", point_cloud, settings.comp_mode);
+		load_compressed_point_cloud("test.bin", "testB.bin", point_cloud, settings.comp_mode, 2503*3);
 		std::cout << "Point cloud size: " << point_cloud.size << std::endl;
 		std::cout << "Number of points: " << point_cloud.no_of_points << std::endl;
 	}
@@ -102,12 +102,11 @@ int main(int argc, char * argv[]) {
 		//load_point_cloud("../Room2.txt", 112586, 3, point_cloud_b);
 
 		load_point_cloud_from_binary("../stan_benchmark.bin", point_cloud);
-		load_compressed_point_cloud("test.bin", "testB.pin", point_cloud_b, settings.comp_mode);
-
 		std::cout << "A:" << std::endl;
 		std::cout << "Point cloud size: " << point_cloud.size << std::endl;
 		std::cout << "Number of points: " << point_cloud.no_of_points << std::endl;
 
+		load_compressed_point_cloud("test.bin", "testB.pin", point_cloud_b, settings.comp_mode, point_cloud.size);
 		std::cout << "B:" << std::endl;
 		std::cout << "Point cloud size: " << point_cloud_b.size << std::endl;
 		std::cout << "Number of points: " << point_cloud_b.no_of_points << std::endl;
@@ -358,6 +357,6 @@ void set_settings() {
 	settings.draw_patch_planes = &draw_patch_planes;
 	settings.reorient_patches = false;
 	settings.bits_reserved_axes = 127;
-	settings.max_points_leaf = 32;
+	settings.max_points_leaf = 64;
 	settings.min_points = 4;
 }
