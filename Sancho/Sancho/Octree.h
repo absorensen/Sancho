@@ -52,6 +52,7 @@ public:
 	void print_patch_b(std::ofstream &file, Patch &patch);
 	void print_patch_c(std::ofstream &file, std::ofstream &file_b, Patch &patch);
 	void print_patch_d(std::ofstream &file, std::ofstream &file_b, Patch &patch);
+	void retrieve_nearest(const Eigen::Vector4d &in, Eigen::Vector4d &out);
 	void calculate_patch_a();
 	void calculate_patch_b();
 	void calculate_patch_c();

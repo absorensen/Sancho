@@ -31,523 +31,9 @@ void Octree::clear()
 	m_children = NULL;
 }
 
-void Octree::write_patches_to_file(const std::string file_name, const std::string file_name_b) {
-	std::ofstream file;
-	file.open(file_name.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
-	std::ofstream file_b;
-	std::vector<Patch*> patches;
-	add_node_patches_to_vector(patches);
-	const int size = patches.size();
-	switch (_settings->comp_mode) {
-	case(A):
-		for (int i = 0; i < size; ++i) {
-			print_patch_a(file, *patches[i]);
-		}
-		break;
-
-	// do not translate into new patch coord system
-	case(B):
-		for (int i = 0; i < size; ++i) {
-			print_patch_b(file, *patches[i]);
-		}
-		break;
-
-	// shun points with too much overhead to seperate file
-	case(C):
-		file_b.open(file_name_b.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
-		for (int i = 0; i < size; ++i) {
-			print_patch_c(file, file_b, *patches[i]);
-		}
-		file_b.close();
-		break;
-
-	// both
-	case(D):
-		file_b.open(file_name_b.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
-		for (int i = 0; i < size; ++i) {
-			print_patch_d(file, file_b, *patches[i]);
-		}
-		file_b.close();
-		break;
-
-	default:
-		break;
-	}
-
-	file.close();
-}
-
-void Octree::leaf_distribution() {
-	std::map<int, float> dist;
-	std::cout << "Leaf distribution: " << std::endl;
-	std::ofstream file;
-	file.open("prob_dist.txt", std::ios::out | std::ios::trunc);
-	get_leaf_counts(dist);
-	float sum = 0.0f;
-	const int max_points = _settings->max_points_leaf;
-	for (int i = 0; i <= max_points; ++i) {
-		if (dist.count(i) > 0) {
-			sum += dist.at(i);
-		}
-	}
-	sum = 1.0f / sum;
-	for (int i = 0; i <= max_points; ++i) {
-		if (dist.count(i) > 0) {
-			//std::cout << i << " points with probability: " << dist.at(i) * sum << std::endl;
-			file << i << " " << dist.at(i) * sum << "\n";
-		}
-		else {
-			file << i << " " << "0" << "\n";
-		}
-	}
-	file.close();
-}
-
-void Octree::get_leaf_counts(std::map<int, float> &dist) {
-	if (m_is_leaf) {
-
-		if (dist.find(m_indexes.size()) == dist.end()) {
-			dist[m_indexes.size()] = 0.0f;
-		}
-		dist[m_indexes.size()] = dist[m_indexes.size()] + 1.0f;
-		return;
-	}
-	if (m_children != NULL)
-	{
-		for (short i = 0; i < 8; ++i)
-		{
-			m_children[i].get_leaf_counts(dist);
-		}
-	}
-}
-
-void Octree::print_patch_a(std::ofstream &file, Patch &patch) {
-	// origin
-	file.write((char*)&patch.origin[0], sizeof(float));
-	file.write((char*)&patch.origin[1], sizeof(float));
-	file.write((char*)&patch.origin[2], sizeof(float));
-
-	// plane dir1
-	file.write((char*)&patch.plane_dir1[0], sizeof(float));
-	file.write((char*)&patch.plane_dir1[1], sizeof(float));
-	file.write((char*)&patch.plane_dir1[2], sizeof(float));
-
-	// plane dir2
-	file.write((char*)&patch.plane_dir2[0], sizeof(float));
-	file.write((char*)&patch.plane_dir2[1], sizeof(float));
-	file.write((char*)&patch.plane_dir2[2], sizeof(float));
-
-	// plane norm
-	file.write((char*)&patch.plane_norm[0], sizeof(float));
-	file.write((char*)&patch.plane_norm[1], sizeof(float));
-	file.write((char*)&patch.plane_norm[2], sizeof(float));
-
-	// quants
-	file.write((char*)&patch.quant_x, sizeof(float));
-	file.write((char*)&patch.quant_y, sizeof(float));
-	file.write((char*)&patch.quant_z, sizeof(float));
-
-	// number of points
-	file.write((char*)&patch.num_points, sizeof(uint8_t));
-
-	const int num_coords = 3 * patch.num_points;
-	for (int i = 0; i < num_coords; ++i) {
-		file.write((char*)&patch.points[i], sizeof(int8_t));
-	}
-}
-
-void Octree::print_patch_b(std::ofstream &file, Patch &patch) {
-	if (patch.num_points == 0) return;
-	// origin
-	file.write((char*)&patch.origin[0], sizeof(float));
-	file.write((char*)&patch.origin[1], sizeof(float));
-	file.write((char*)&patch.origin[2], sizeof(float));
-
-	// quants
-	file.write((char*)&patch.quant_x, sizeof(float));
-	file.write((char*)&patch.quant_y, sizeof(float));
-	file.write((char*)&patch.quant_z, sizeof(float));
-
-	// number of points
-	file.write((char*)&patch.num_points, sizeof(uint8_t));
-
-	const int num_coords = 3 * patch.num_points;
-	for (int i = 0; i < num_coords; ++i) {
-		file.write((char*)&patch.points[i], sizeof(int8_t));
-	}
-}
-
-void Octree::print_patch_c(std::ofstream &file, std::ofstream &file_b, Patch &patch) {
-	if (patch.num_points >= _settings->min_points) {
-		// origin
-		file.write((char*)&patch.origin[0], sizeof(float));
-		file.write((char*)&patch.origin[1], sizeof(float));
-		file.write((char*)&patch.origin[2], sizeof(float));
-
-		// plane dir1
-		file.write((char*)&patch.plane_dir1[0], sizeof(float));
-		file.write((char*)&patch.plane_dir1[1], sizeof(float));
-		file.write((char*)&patch.plane_dir1[2], sizeof(float));
-
-		// plane dir2
-		file.write((char*)&patch.plane_dir2[0], sizeof(float));
-		file.write((char*)&patch.plane_dir2[1], sizeof(float));
-		file.write((char*)&patch.plane_dir2[2], sizeof(float));
-
-		// plane norm
-		file.write((char*)&patch.plane_norm[0], sizeof(float));
-		file.write((char*)&patch.plane_norm[1], sizeof(float));
-		file.write((char*)&patch.plane_norm[2], sizeof(float));
-
-		// quants
-		file.write((char*)&patch.quant_x, sizeof(float));
-		file.write((char*)&patch.quant_y, sizeof(float));
-		file.write((char*)&patch.quant_z, sizeof(float));
-
-		// number of points
-		file.write((char*)&patch.num_points, sizeof(uint8_t));
-
-		const int num_coords = 3 * patch.num_points;
-		for (int i = 0; i < num_coords; ++i) {
-			file.write((char*)&patch.points[i], sizeof(int8_t));
-		}
-	}
-	else {
-		const int num_coords = 3 * patch.num_points;
-		for (int i = 0; i < num_coords; ++i) {
-			file_b.write((char*)&patch.non_compressible_points[i], sizeof(float));
-		}
-	}
-}
-
-void Octree::print_patch_d(std::ofstream &file, std::ofstream &file_b, Patch &patch) {
-	if (patch.num_points >= _settings->min_points) {
-		// origin
-		file.write((char*)&patch.origin[0], sizeof(float));
-		file.write((char*)&patch.origin[1], sizeof(float));
-		file.write((char*)&patch.origin[2], sizeof(float));
-
-		// quants
-		file.write((char*)&patch.quant_x, sizeof(float));
-		file.write((char*)&patch.quant_y, sizeof(float));
-		file.write((char*)&patch.quant_z, sizeof(float));
-
-		// number of points
-		file.write((char*)&patch.num_points, sizeof(uint8_t));
-
-		const int num_coords = 3 * patch.num_points;
-		for (int i = 0; i < num_coords; ++i) {
-			file.write((char*)&patch.points[i], sizeof(int8_t));
-		}
-	}
-	else {
-		const int num_coords = 3 * patch.num_points;
-		for (int i = 0; i < num_coords; ++i) {
-			file_b.write((char*)&patch.non_compressible_points[i], sizeof(float));
-		}
-	}
-}
-
-void Octree::add_node_patches_to_vector(std::vector<Patch*> &patches) {
-	if (m_is_leaf) { 
-		patches.push_back(&m_patch); 
-		return;
-	}
-	if (m_children != NULL)
-	{
-		for (short i = 0; i < 8; ++i)
-		{
-			m_children[i].add_node_patches_to_vector(patches);
-		}
-	}
-}
-
-void Octree::calculate_patch_a() {
-	// principal component analysis
-	least_variance_direction();
-
-	// plane data
-	m_patch = new Patch;
-	m_patch.plane_norm[0] = static_cast<float>(normal1.x());
-	m_patch.plane_norm[1] = static_cast<float>(normal1.y());
-	m_patch.plane_norm[2] = static_cast<float>(normal1.z());
-
-	m_patch.plane_dir1[0] = static_cast<float>(normal2.x());
-	m_patch.plane_dir1[1] = static_cast<float>(normal2.y());
-	m_patch.plane_dir1[2] = static_cast<float>(normal2.z());
-
-	m_patch.plane_dir2[0] = static_cast<float>(normal3.x());
-	m_patch.plane_dir2[1] = static_cast<float>(normal3.y());
-	m_patch.plane_dir2[2] = static_cast<float>(normal3.z());
-
-	// compute plane bounds
-	m_patch.num_points = static_cast<uint8_t>(m_indexes.size());
-
-	Eigen::Matrix4d world_space_to_patch_space;
-	world_space_to_patch_space = Eigen::Matrix4d::Identity();
-	world_space_to_patch_space(0, 0) = normal2(0);
-	world_space_to_patch_space(0, 1) = normal2(1);
-	world_space_to_patch_space(0, 2) = normal2(2);
-	world_space_to_patch_space(0, 3) = 0.0;
-
-	world_space_to_patch_space(1, 0) = normal3(0);
-	world_space_to_patch_space(1, 1) = normal3(1);
-	world_space_to_patch_space(1, 2) = normal3(2);
-	world_space_to_patch_space(1, 3) = 0.0;
-
-	world_space_to_patch_space(2, 0) = normal1(0);
-	world_space_to_patch_space(2, 1) = normal1(1);
-	world_space_to_patch_space(2, 2) = normal1(2);
-	world_space_to_patch_space(2, 3) = 0.0;
-
-	m_patch.origin[0] = m_centroid(0);
-	m_patch.origin[1] = m_centroid(1);
-	m_patch.origin[2] = m_centroid(2);
-
-
-	float* points = new float[m_patch.num_points * 3];
-	m_patch.points = new int8_t[m_patch.num_points * 3];
-
-	Eigen::Vector4d new_point;
-
-	double max, mix, may, miy, maz, miz;
-	max = mix = may = miy = maz = miz = 0.0;
-	for (uint8_t i = 0, j = 0; j < m_patch.num_points; i += 3, ++j) {
-
-		new_point = world_space_to_patch_space * (m_root->m_points[m_indexes[j]] - m_centroid);
-		points[i] = new_point.x();
-		points[i + 1] = new_point.y();
-		points[i + 2] = new_point.z();
-
-		max = max > points[i] ? max : points[i];
-		mix = mix < points[i] ? mix : points[i];
-
-		may = may > points[i + 1] ? may : points[i + 1];
-		miy = miy < points[i + 1] ? miy : points[i + 1];
-
-		maz = maz > points[i + 2] ? maz : points[i + 2];
-		miz = miz < points[i + 2] ? miz : points[i + 2];
-
-	}
-	m_patch.quant_x = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(max), abs(mix)), EPS));
-	m_patch.quant_y = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(may), abs(miy)), EPS));
-	m_patch.quant_z = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(maz), abs(miz)), EPS));
-
-	const unsigned int no_of_coords = m_patch.num_points * 3;
-	for (unsigned int i = 0; i < no_of_coords; i += 3) {
-		m_patch.points[i] = static_cast<int8_t>(points[i] * m_patch.quant_x);
-		m_patch.points[i + 1] = static_cast<int8_t>(points[i + 1] * m_patch.quant_y);
-		m_patch.points[i + 2] = static_cast<int8_t>(points[i + 2] * m_patch.quant_z);
-	}
-
-	delete[] points;
+void Octree::retrieve_nearest(const Eigen::Vector4d &in, Eigen::Vector4d &out) {
 
 }
-
-// do not translate into new coordinate system
-void Octree::calculate_patch_b() {
-	// plane data
-	m_patch = new Patch;
-
-	// compute plane bounds
-	m_patch.num_points = static_cast<uint8_t>(m_indexes.size());
-	if (m_patch.num_points == 0) return;
-
-	m_patch.origin[0] = m_centroid.x();
-	m_patch.origin[1] = m_centroid.y();
-	m_patch.origin[2] = m_centroid.z();
-
-	float* points = new float[m_patch.num_points * 3];
-	m_patch.points = new int8_t[m_patch.num_points * 3];
-
-	Eigen::Vector4d new_point;
-
-	double max, mix, may, miy, maz, miz;
-	max = mix = may = miy = maz = miz = 0.0;
-	for (uint8_t i = 0, j = 0; j < m_patch.num_points; i += 3, ++j) {
-
-		new_point = m_root->m_points[m_indexes[j]] - m_centroid;
-		points[i] = new_point.x();
-		points[i + 1] = new_point.y();
-		points[i + 2] = new_point.z();
-
-		max = max > points[i] ? max : points[i];
-		mix = mix < points[i] ? mix : points[i];
-
-		may = may > points[i + 1] ? may : points[i + 1];
-		miy = miy < points[i + 1] ? miy : points[i + 1];
-
-		maz = maz > points[i + 2] ? maz : points[i + 2];
-		miz = miz < points[i + 2] ? miz : points[i + 2];
-
-	}
-	m_patch.quant_x = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(max), abs(mix)), EPS));
-	m_patch.quant_y = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(may), abs(miy)), EPS));
-	m_patch.quant_z = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(maz), abs(miz)), EPS));
-
-	const unsigned int no_of_coords = m_patch.num_points * 3;
-	for (unsigned int i = 0; i < no_of_coords; i += 3) {
-		m_patch.points[i] = static_cast<int8_t>(points[i] * m_patch.quant_x);
-		m_patch.points[i + 1] = static_cast<int8_t>(points[i + 1] * m_patch.quant_y);
-		m_patch.points[i + 2] = static_cast<int8_t>(points[i + 2] * m_patch.quant_z);
-	}
-
-	delete[] points;
-}
-
-
-// shun the points too expensive to compress to seperate file
-void Octree::calculate_patch_c() {
-	// compute plane bounds
-	m_patch = new Patch;
-	m_patch.num_points = static_cast<uint8_t>(m_indexes.size());
-
-	if (m_patch.num_points >= _settings->min_points) {
-		// principal component analysis
-		least_variance_direction();
-
-		// plane data
-		m_patch.plane_norm[0] = static_cast<float>(normal1.x());
-		m_patch.plane_norm[1] = static_cast<float>(normal1.y());
-		m_patch.plane_norm[2] = static_cast<float>(normal1.z());
-
-		m_patch.plane_dir1[0] = static_cast<float>(normal2.x());
-		m_patch.plane_dir1[1] = static_cast<float>(normal2.y());
-		m_patch.plane_dir1[2] = static_cast<float>(normal2.z());
-
-		m_patch.plane_dir2[0] = static_cast<float>(normal3.x());
-		m_patch.plane_dir2[1] = static_cast<float>(normal3.y());
-		m_patch.plane_dir2[2] = static_cast<float>(normal3.z());
-
-
-		Eigen::Matrix4d world_space_to_patch_space;
-		world_space_to_patch_space = Eigen::Matrix4d::Identity();
-		world_space_to_patch_space(0, 0) = normal2(0);
-		world_space_to_patch_space(0, 1) = normal2(1);
-		world_space_to_patch_space(0, 2) = normal2(2);
-		world_space_to_patch_space(0, 3) = 0.0;
-
-		world_space_to_patch_space(1, 0) = normal3(0);
-		world_space_to_patch_space(1, 1) = normal3(1);
-		world_space_to_patch_space(1, 2) = normal3(2);
-		world_space_to_patch_space(1, 3) = 0.0;
-
-		world_space_to_patch_space(2, 0) = normal1(0);
-		world_space_to_patch_space(2, 1) = normal1(1);
-		world_space_to_patch_space(2, 2) = normal1(2);
-		world_space_to_patch_space(2, 3) = 0.0;
-
-		m_patch.origin[0] = m_centroid(0);
-		m_patch.origin[1] = m_centroid(1);
-		m_patch.origin[2] = m_centroid(2);
-
-
-		float* points = new float[m_patch.num_points * 3];
-		m_patch.points = new int8_t[m_patch.num_points * 3];
-
-		Eigen::Vector4d new_point;
-
-		double max, mix, may, miy, maz, miz;
-		max = mix = may = miy = maz = miz = 0.0;
-		for (uint8_t i = 0, j = 0; j < m_patch.num_points; i += 3, ++j) {
-
-			new_point = world_space_to_patch_space * (m_root->m_points[m_indexes[j]] - m_centroid);
-			points[i] = new_point.x();
-			points[i + 1] = new_point.y();
-			points[i + 2] = new_point.z();
-
-			max = max > points[i] ? max : points[i];
-			mix = mix < points[i] ? mix : points[i];
-
-			may = may > points[i + 1] ? may : points[i + 1];
-			miy = miy < points[i + 1] ? miy : points[i + 1];
-
-			maz = maz > points[i + 2] ? maz : points[i + 2];
-			miz = miz < points[i + 2] ? miz : points[i + 2];
-
-		}
-		m_patch.quant_x = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(max), abs(mix)), EPS));
-		m_patch.quant_y = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(may), abs(miy)), EPS));
-		m_patch.quant_z = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(maz), abs(miz)), EPS));
-
-		const unsigned int no_of_coords = m_patch.num_points * 3;
-		for (unsigned int i = 0; i < no_of_coords; i += 3) {
-			m_patch.points[i] = static_cast<int8_t>(points[i] * m_patch.quant_x);
-			m_patch.points[i + 1] = static_cast<int8_t>(points[i + 1] * m_patch.quant_y);
-			m_patch.points[i + 2] = static_cast<int8_t>(points[i + 2] * m_patch.quant_z);
-		}
-
-		delete[] points;
-	}
-	else {
-		m_patch.non_compressible_points = new float[m_patch.num_points*3];
-		for (int i = 0; i < m_patch.num_points; ++i) {
-			m_patch.non_compressible_points[i * 3] = m_root->m_points[m_indexes[i]](0);
-			m_patch.non_compressible_points[i * 3 + 1] = m_root->m_points[m_indexes[i]](1);
-			m_patch.non_compressible_points[i * 3 + 2] = m_root->m_points[m_indexes[i]](2);
-		}
-	}
-}
-
-
-// both
-void Octree::calculate_patch_d() {
-	// compute plane bounds
-	m_patch = new Patch;
-	m_patch.num_points = static_cast<uint8_t>(m_indexes.size());
-
-	if (m_patch.num_points >= _settings->min_points) {
-		m_patch.origin[0] = m_centroid(0);
-		m_patch.origin[1] = m_centroid(1);
-		m_patch.origin[2] = m_centroid(2);
-
-		float* points = new float[m_patch.num_points * 3];
-		m_patch.points = new int8_t[m_patch.num_points * 3];
-
-		Eigen::Vector4d new_point;
-
-		double max, mix, may, miy, maz, miz;
-		max = mix = may = miy = maz = miz = 0.0;
-		for (uint8_t i = 0, j = 0; j < m_patch.num_points; i += 3, ++j) {
-
-			new_point = m_root->m_points[m_indexes[j]] - m_centroid;
-			points[i] = new_point.x();
-			points[i + 1] = new_point.y();
-			points[i + 2] = new_point.z();
-
-			max = max > points[i] ? max : points[i];
-			mix = mix < points[i] ? mix : points[i];
-
-			may = may > points[i + 1] ? may : points[i + 1];
-			miy = miy < points[i + 1] ? miy : points[i + 1];
-
-			maz = maz > points[i + 2] ? maz : points[i + 2];
-			miz = miz < points[i + 2] ? miz : points[i + 2];
-
-		}
-		m_patch.quant_x = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(max), abs(mix)), EPS));
-		m_patch.quant_y = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(may), abs(miy)), EPS));
-		m_patch.quant_z = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(maz), abs(miz)), EPS));
-
-		const unsigned int no_of_coords = m_patch.num_points * 3;
-		for (unsigned int i = 0; i < no_of_coords; i += 3) {
-			m_patch.points[i] = static_cast<int8_t>(points[i] * m_patch.quant_x);
-			m_patch.points[i + 1] = static_cast<int8_t>(points[i + 1] * m_patch.quant_y);
-			m_patch.points[i + 2] = static_cast<int8_t>(points[i + 2] * m_patch.quant_z);
-		}
-
-		delete[] points;
-	}
-	else {
-		m_patch.non_compressible_points = new float[m_patch.num_points * 3];
-		for (int i = 0; i < m_patch.num_points; ++i) {
-			m_patch.non_compressible_points[i * 3] = m_root->m_points[m_indexes[i]](0);
-			m_patch.non_compressible_points[i * 3 + 1] = m_root->m_points[m_indexes[i]](1);
-			m_patch.non_compressible_points[i * 3 + 2] = m_root->m_points[m_indexes[i]](2);
-		}
-	}
-}
-
 
 void Octree::subdivide(Settings &settings)
 {
@@ -649,6 +135,512 @@ void Octree::subdivide(Settings &settings)
 		m_children[i].subdivide(settings);
 	}
 }
+
+void Octree::write_patches_to_file(const std::string file_name, const std::string file_name_b) {
+	std::ofstream file;
+	file.open(file_name.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+	std::ofstream file_b;
+	std::vector<Patch*> patches;
+	add_node_patches_to_vector(patches);
+	const int size = patches.size();
+	switch (_settings->comp_mode) {
+	case(A):
+		for (int i = 0; i < size; ++i) {
+			print_patch_a(file, *patches[i]);
+		}
+		break;
+
+	// do not translate into new patch coord system
+	case(B):
+		for (int i = 0; i < size; ++i) {
+			print_patch_b(file, *patches[i]);
+		}
+		break;
+
+	// shun points with too much overhead to seperate file
+	case(C):
+		file_b.open(file_name_b.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+		for (int i = 0; i < size; ++i) {
+			print_patch_c(file, file_b, *patches[i]);
+		}
+		file_b.close();
+		break;
+
+	// both
+	case(D):
+		file_b.open(file_name_b.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+		for (int i = 0; i < size; ++i) {
+			print_patch_d(file, file_b, *patches[i]);
+		}
+		file_b.close();
+		break;
+
+	default:
+		break;
+	}
+
+	file.close();
+}
+void Octree::leaf_distribution() {
+	std::map<int, float> dist;
+	std::cout << "Leaf distribution: " << std::endl;
+	std::ofstream file;
+	file.open("prob_dist.txt", std::ios::out | std::ios::trunc);
+	get_leaf_counts(dist);
+	float sum = 0.0f;
+	const int max_points = _settings->max_points_leaf;
+	for (int i = 0; i <= max_points; ++i) {
+		if (dist.count(i) > 0) {
+			sum += dist.at(i);
+		}
+	}
+	sum = 1.0f / sum;
+	for (int i = 0; i <= max_points; ++i) {
+		if (dist.count(i) > 0) {
+			//std::cout << i << " points with probability: " << dist.at(i) * sum << std::endl;
+			file << i << " " << dist.at(i) * sum << "\n";
+		}
+		else {
+			file << i << " " << "0" << "\n";
+		}
+	}
+	file.close();
+}
+void Octree::get_leaf_counts(std::map<int, float> &dist) {
+	if (m_is_leaf) {
+
+		if (dist.find(m_indexes.size()) == dist.end()) {
+			dist[m_indexes.size()] = 0.0f;
+		}
+		dist[m_indexes.size()] = dist[m_indexes.size()] + 1.0f;
+		return;
+	}
+	if (m_children != NULL)
+	{
+		for (short i = 0; i < 8; ++i)
+		{
+			m_children[i].get_leaf_counts(dist);
+		}
+	}
+}
+void Octree::print_patch_a(std::ofstream &file, Patch &patch) {
+	// origin
+	file.write((char*)&patch.origin[0], sizeof(float));
+	file.write((char*)&patch.origin[1], sizeof(float));
+	file.write((char*)&patch.origin[2], sizeof(float));
+
+	// plane dir1
+	file.write((char*)&patch.plane_dir1[0], sizeof(float));
+	file.write((char*)&patch.plane_dir1[1], sizeof(float));
+	file.write((char*)&patch.plane_dir1[2], sizeof(float));
+
+	// plane dir2
+	file.write((char*)&patch.plane_dir2[0], sizeof(float));
+	file.write((char*)&patch.plane_dir2[1], sizeof(float));
+	file.write((char*)&patch.plane_dir2[2], sizeof(float));
+
+	// plane norm
+	file.write((char*)&patch.plane_norm[0], sizeof(float));
+	file.write((char*)&patch.plane_norm[1], sizeof(float));
+	file.write((char*)&patch.plane_norm[2], sizeof(float));
+
+	// quants
+	file.write((char*)&patch.quant_x, sizeof(float));
+	file.write((char*)&patch.quant_y, sizeof(float));
+	file.write((char*)&patch.quant_z, sizeof(float));
+
+	// number of points
+	file.write((char*)&patch.num_points, sizeof(uint8_t));
+
+	const int num_coords = 3 * patch.num_points;
+	for (int i = 0; i < num_coords; ++i) {
+		file.write((char*)&patch.points[i], sizeof(int8_t));
+	}
+}
+void Octree::print_patch_b(std::ofstream &file, Patch &patch) {
+	if (patch.num_points == 0) return;
+	// origin
+	file.write((char*)&patch.origin[0], sizeof(float));
+	file.write((char*)&patch.origin[1], sizeof(float));
+	file.write((char*)&patch.origin[2], sizeof(float));
+
+	// quants
+	file.write((char*)&patch.quant_x, sizeof(float));
+	file.write((char*)&patch.quant_y, sizeof(float));
+	file.write((char*)&patch.quant_z, sizeof(float));
+
+	// number of points
+	file.write((char*)&patch.num_points, sizeof(uint8_t));
+
+	const int num_coords = 3 * patch.num_points;
+	for (int i = 0; i < num_coords; ++i) {
+		file.write((char*)&patch.points[i], sizeof(int8_t));
+	}
+}
+void Octree::print_patch_c(std::ofstream &file, std::ofstream &file_b, Patch &patch) {
+	if (patch.num_points >= _settings->min_points) {
+		// origin
+		file.write((char*)&patch.origin[0], sizeof(float));
+		file.write((char*)&patch.origin[1], sizeof(float));
+		file.write((char*)&patch.origin[2], sizeof(float));
+
+		// plane dir1
+		file.write((char*)&patch.plane_dir1[0], sizeof(float));
+		file.write((char*)&patch.plane_dir1[1], sizeof(float));
+		file.write((char*)&patch.plane_dir1[2], sizeof(float));
+
+		// plane dir2
+		file.write((char*)&patch.plane_dir2[0], sizeof(float));
+		file.write((char*)&patch.plane_dir2[1], sizeof(float));
+		file.write((char*)&patch.plane_dir2[2], sizeof(float));
+
+		// plane norm
+		file.write((char*)&patch.plane_norm[0], sizeof(float));
+		file.write((char*)&patch.plane_norm[1], sizeof(float));
+		file.write((char*)&patch.plane_norm[2], sizeof(float));
+
+		// quants
+		file.write((char*)&patch.quant_x, sizeof(float));
+		file.write((char*)&patch.quant_y, sizeof(float));
+		file.write((char*)&patch.quant_z, sizeof(float));
+
+		// number of points
+		file.write((char*)&patch.num_points, sizeof(uint8_t));
+
+		const int num_coords = 3 * patch.num_points;
+		for (int i = 0; i < num_coords; ++i) {
+			file.write((char*)&patch.points[i], sizeof(int8_t));
+		}
+	}
+	else {
+		const int num_coords = 3 * patch.num_points;
+		for (int i = 0; i < num_coords; ++i) {
+			file_b.write((char*)&patch.non_compressible_points[i], sizeof(float));
+		}
+	}
+}
+void Octree::print_patch_d(std::ofstream &file, std::ofstream &file_b, Patch &patch) {
+	if (patch.num_points >= _settings->min_points) {
+		// origin
+		file.write((char*)&patch.origin[0], sizeof(float));
+		file.write((char*)&patch.origin[1], sizeof(float));
+		file.write((char*)&patch.origin[2], sizeof(float));
+
+		// quants
+		file.write((char*)&patch.quant_x, sizeof(float));
+		file.write((char*)&patch.quant_y, sizeof(float));
+		file.write((char*)&patch.quant_z, sizeof(float));
+
+		// number of points
+		file.write((char*)&patch.num_points, sizeof(uint8_t));
+
+		const int num_coords = 3 * patch.num_points;
+		for (int i = 0; i < num_coords; ++i) {
+			file.write((char*)&patch.points[i], sizeof(int8_t));
+		}
+	}
+	else {
+		const int num_coords = 3 * patch.num_points;
+		for (int i = 0; i < num_coords; ++i) {
+			file_b.write((char*)&patch.non_compressible_points[i], sizeof(float));
+		}
+	}
+}
+void Octree::add_node_patches_to_vector(std::vector<Patch*> &patches) {
+	if (m_is_leaf) { 
+		patches.push_back(&m_patch); 
+		return;
+	}
+	if (m_children != NULL)
+	{
+		for (short i = 0; i < 8; ++i)
+		{
+			m_children[i].add_node_patches_to_vector(patches);
+		}
+	}
+}
+void Octree::calculate_patch_a() {
+	// principal component analysis
+	least_variance_direction();
+
+	// plane data
+	m_patch = new Patch;
+	m_patch.plane_norm[0] = static_cast<float>(normal1.x());
+	m_patch.plane_norm[1] = static_cast<float>(normal1.y());
+	m_patch.plane_norm[2] = static_cast<float>(normal1.z());
+
+	m_patch.plane_dir1[0] = static_cast<float>(normal2.x());
+	m_patch.plane_dir1[1] = static_cast<float>(normal2.y());
+	m_patch.plane_dir1[2] = static_cast<float>(normal2.z());
+
+	m_patch.plane_dir2[0] = static_cast<float>(normal3.x());
+	m_patch.plane_dir2[1] = static_cast<float>(normal3.y());
+	m_patch.plane_dir2[2] = static_cast<float>(normal3.z());
+
+	// compute plane bounds
+	m_patch.num_points = static_cast<uint8_t>(m_indexes.size());
+
+	Eigen::Matrix4d world_space_to_patch_space;
+	world_space_to_patch_space = Eigen::Matrix4d::Identity();
+	world_space_to_patch_space(0, 0) = normal2(0);
+	world_space_to_patch_space(0, 1) = normal2(1);
+	world_space_to_patch_space(0, 2) = normal2(2);
+	world_space_to_patch_space(0, 3) = 0.0;
+
+	world_space_to_patch_space(1, 0) = normal3(0);
+	world_space_to_patch_space(1, 1) = normal3(1);
+	world_space_to_patch_space(1, 2) = normal3(2);
+	world_space_to_patch_space(1, 3) = 0.0;
+
+	world_space_to_patch_space(2, 0) = normal1(0);
+	world_space_to_patch_space(2, 1) = normal1(1);
+	world_space_to_patch_space(2, 2) = normal1(2);
+	world_space_to_patch_space(2, 3) = 0.0;
+
+	m_patch.origin[0] = m_centroid(0);
+	m_patch.origin[1] = m_centroid(1);
+	m_patch.origin[2] = m_centroid(2);
+
+
+	float* points = new float[m_patch.num_points * 3];
+	m_patch.points = new int8_t[m_patch.num_points * 3];
+
+	Eigen::Vector4d new_point;
+
+	double max, mix, may, miy, maz, miz;
+	max = mix = may = miy = maz = miz = 0.0;
+	for (uint8_t i = 0, j = 0; j < m_patch.num_points; i += 3, ++j) {
+
+		new_point = world_space_to_patch_space * (m_root->m_points[m_indexes[j]] - m_centroid);
+		points[i] = new_point.x();
+		points[i + 1] = new_point.y();
+		points[i + 2] = new_point.z();
+
+		max = max > points[i] ? max : points[i];
+		mix = mix < points[i] ? mix : points[i];
+
+		may = may > points[i + 1] ? may : points[i + 1];
+		miy = miy < points[i + 1] ? miy : points[i + 1];
+
+		maz = maz > points[i + 2] ? maz : points[i + 2];
+		miz = miz < points[i + 2] ? miz : points[i + 2];
+
+	}
+	m_patch.quant_x = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(max), abs(mix)), EPS));
+	m_patch.quant_y = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(may), abs(miy)), EPS));
+	m_patch.quant_z = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(maz), abs(miz)), EPS));
+
+	const unsigned int no_of_coords = m_patch.num_points * 3;
+	for (unsigned int i = 0; i < no_of_coords; i += 3) {
+		m_patch.points[i] = static_cast<int8_t>(points[i] * m_patch.quant_x);
+		m_patch.points[i + 1] = static_cast<int8_t>(points[i + 1] * m_patch.quant_y);
+		m_patch.points[i + 2] = static_cast<int8_t>(points[i + 2] * m_patch.quant_z);
+	}
+
+	delete[] points;
+
+}
+// do not translate into new coordinate system
+void Octree::calculate_patch_b() {
+	// plane data
+	m_patch = new Patch;
+
+	// compute plane bounds
+	m_patch.num_points = static_cast<uint8_t>(m_indexes.size());
+	if (m_patch.num_points == 0) return;
+
+	m_patch.origin[0] = m_centroid.x();
+	m_patch.origin[1] = m_centroid.y();
+	m_patch.origin[2] = m_centroid.z();
+
+	float* points = new float[m_patch.num_points * 3];
+	m_patch.points = new int8_t[m_patch.num_points * 3];
+
+	Eigen::Vector4d new_point;
+
+	double max, mix, may, miy, maz, miz;
+	max = mix = may = miy = maz = miz = 0.0;
+	for (uint8_t i = 0, j = 0; j < m_patch.num_points; i += 3, ++j) {
+
+		new_point = m_root->m_points[m_indexes[j]] - m_centroid;
+		points[i] = new_point.x();
+		points[i + 1] = new_point.y();
+		points[i + 2] = new_point.z();
+
+		max = max > points[i] ? max : points[i];
+		mix = mix < points[i] ? mix : points[i];
+
+		may = may > points[i + 1] ? may : points[i + 1];
+		miy = miy < points[i + 1] ? miy : points[i + 1];
+
+		maz = maz > points[i + 2] ? maz : points[i + 2];
+		miz = miz < points[i + 2] ? miz : points[i + 2];
+
+	}
+	m_patch.quant_x = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(max), abs(mix)), EPS));
+	m_patch.quant_y = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(may), abs(miy)), EPS));
+	m_patch.quant_z = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(maz), abs(miz)), EPS));
+
+	const unsigned int no_of_coords = m_patch.num_points * 3;
+	for (unsigned int i = 0; i < no_of_coords; i += 3) {
+		m_patch.points[i] = static_cast<int8_t>(points[i] * m_patch.quant_x);
+		m_patch.points[i + 1] = static_cast<int8_t>(points[i + 1] * m_patch.quant_y);
+		m_patch.points[i + 2] = static_cast<int8_t>(points[i + 2] * m_patch.quant_z);
+	}
+
+	delete[] points;
+}
+// shun the points too expensive to compress to seperate file
+void Octree::calculate_patch_c() {
+	// compute plane bounds
+	m_patch = new Patch;
+	m_patch.num_points = static_cast<uint8_t>(m_indexes.size());
+
+	if (m_patch.num_points >= _settings->min_points) {
+		// principal component analysis
+		least_variance_direction();
+
+		// plane data
+		m_patch.plane_norm[0] = static_cast<float>(normal1.x());
+		m_patch.plane_norm[1] = static_cast<float>(normal1.y());
+		m_patch.plane_norm[2] = static_cast<float>(normal1.z());
+
+		m_patch.plane_dir1[0] = static_cast<float>(normal2.x());
+		m_patch.plane_dir1[1] = static_cast<float>(normal2.y());
+		m_patch.plane_dir1[2] = static_cast<float>(normal2.z());
+
+		m_patch.plane_dir2[0] = static_cast<float>(normal3.x());
+		m_patch.plane_dir2[1] = static_cast<float>(normal3.y());
+		m_patch.plane_dir2[2] = static_cast<float>(normal3.z());
+
+
+		Eigen::Matrix4d world_space_to_patch_space;
+		world_space_to_patch_space = Eigen::Matrix4d::Identity();
+		world_space_to_patch_space(0, 0) = normal2(0);
+		world_space_to_patch_space(0, 1) = normal2(1);
+		world_space_to_patch_space(0, 2) = normal2(2);
+		world_space_to_patch_space(0, 3) = 0.0;
+
+		world_space_to_patch_space(1, 0) = normal3(0);
+		world_space_to_patch_space(1, 1) = normal3(1);
+		world_space_to_patch_space(1, 2) = normal3(2);
+		world_space_to_patch_space(1, 3) = 0.0;
+
+		world_space_to_patch_space(2, 0) = normal1(0);
+		world_space_to_patch_space(2, 1) = normal1(1);
+		world_space_to_patch_space(2, 2) = normal1(2);
+		world_space_to_patch_space(2, 3) = 0.0;
+
+		m_patch.origin[0] = m_centroid(0);
+		m_patch.origin[1] = m_centroid(1);
+		m_patch.origin[2] = m_centroid(2);
+
+
+		float* points = new float[m_patch.num_points * 3];
+		m_patch.points = new int8_t[m_patch.num_points * 3];
+
+		Eigen::Vector4d new_point;
+
+		double max, mix, may, miy, maz, miz;
+		max = mix = may = miy = maz = miz = 0.0;
+		for (uint8_t i = 0, j = 0; j < m_patch.num_points; i += 3, ++j) {
+
+			new_point = world_space_to_patch_space * (m_root->m_points[m_indexes[j]] - m_centroid);
+			points[i] = new_point.x();
+			points[i + 1] = new_point.y();
+			points[i + 2] = new_point.z();
+
+			max = max > points[i] ? max : points[i];
+			mix = mix < points[i] ? mix : points[i];
+
+			may = may > points[i + 1] ? may : points[i + 1];
+			miy = miy < points[i + 1] ? miy : points[i + 1];
+
+			maz = maz > points[i + 2] ? maz : points[i + 2];
+			miz = miz < points[i + 2] ? miz : points[i + 2];
+
+		}
+		m_patch.quant_x = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(max), abs(mix)), EPS));
+		m_patch.quant_y = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(may), abs(miy)), EPS));
+		m_patch.quant_z = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(maz), abs(miz)), EPS));
+
+		const unsigned int no_of_coords = m_patch.num_points * 3;
+		for (unsigned int i = 0; i < no_of_coords; i += 3) {
+			m_patch.points[i] = static_cast<int8_t>(points[i] * m_patch.quant_x);
+			m_patch.points[i + 1] = static_cast<int8_t>(points[i + 1] * m_patch.quant_y);
+			m_patch.points[i + 2] = static_cast<int8_t>(points[i + 2] * m_patch.quant_z);
+		}
+
+		delete[] points;
+	}
+	else {
+		m_patch.non_compressible_points = new float[m_patch.num_points*3];
+		for (int i = 0; i < m_patch.num_points; ++i) {
+			m_patch.non_compressible_points[i * 3] = m_root->m_points[m_indexes[i]](0);
+			m_patch.non_compressible_points[i * 3 + 1] = m_root->m_points[m_indexes[i]](1);
+			m_patch.non_compressible_points[i * 3 + 2] = m_root->m_points[m_indexes[i]](2);
+		}
+	}
+}
+// both
+void Octree::calculate_patch_d() {
+	// compute plane bounds
+	m_patch = new Patch;
+	m_patch.num_points = static_cast<uint8_t>(m_indexes.size());
+
+	if (m_patch.num_points >= _settings->min_points) {
+		m_patch.origin[0] = m_centroid(0);
+		m_patch.origin[1] = m_centroid(1);
+		m_patch.origin[2] = m_centroid(2);
+
+		float* points = new float[m_patch.num_points * 3];
+		m_patch.points = new int8_t[m_patch.num_points * 3];
+
+		Eigen::Vector4d new_point;
+
+		double max, mix, may, miy, maz, miz;
+		max = mix = may = miy = maz = miz = 0.0;
+		for (uint8_t i = 0, j = 0; j < m_patch.num_points; i += 3, ++j) {
+
+			new_point = m_root->m_points[m_indexes[j]] - m_centroid;
+			points[i] = new_point.x();
+			points[i + 1] = new_point.y();
+			points[i + 2] = new_point.z();
+
+			max = max > points[i] ? max : points[i];
+			mix = mix < points[i] ? mix : points[i];
+
+			may = may > points[i + 1] ? may : points[i + 1];
+			miy = miy < points[i + 1] ? miy : points[i + 1];
+
+			maz = maz > points[i + 2] ? maz : points[i + 2];
+			miz = miz < points[i + 2] ? miz : points[i + 2];
+
+		}
+		m_patch.quant_x = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(max), abs(mix)), EPS));
+		m_patch.quant_y = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(may), abs(miy)), EPS));
+		m_patch.quant_z = static_cast<float>(_settings->bits_reserved_axes / std::max(std::max(abs(maz), abs(miz)), EPS));
+
+		const unsigned int no_of_coords = m_patch.num_points * 3;
+		for (unsigned int i = 0; i < no_of_coords; i += 3) {
+			m_patch.points[i] = static_cast<int8_t>(points[i] * m_patch.quant_x);
+			m_patch.points[i + 1] = static_cast<int8_t>(points[i + 1] * m_patch.quant_y);
+			m_patch.points[i + 2] = static_cast<int8_t>(points[i + 2] * m_patch.quant_z);
+		}
+
+		delete[] points;
+	}
+	else {
+		m_patch.non_compressible_points = new float[m_patch.num_points * 3];
+		for (int i = 0; i < m_patch.num_points; ++i) {
+			m_patch.non_compressible_points[i * 3] = m_root->m_points[m_indexes[i]](0);
+			m_patch.non_compressible_points[i * 3 + 1] = m_root->m_points[m_indexes[i]](1);
+			m_patch.non_compressible_points[i * 3 + 2] = m_root->m_points[m_indexes[i]](2);
+		}
+	}
+}
+
+
 
 Eigen::Matrix3d Octree::fast_covariance_matrix()
 {
