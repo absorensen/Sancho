@@ -152,7 +152,6 @@ int main(int argc, char * argv[]) {
 	point_cloud_shader.setFloat("height_of_near_plane", height_of_near_plane);
 
 	// Real-Time Point Cloud Compression begin
-	EigenTree eigen_tree;
 	Octree tree;
 	Shader cube_shader("point_cloud.vert", "point_cloud.frag");
 	Shader point_shader("point_cloud.vert", "point_cloud.frag");

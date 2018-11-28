@@ -127,7 +127,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="glad.c" />
-    <ClCompile Include="EigenTree.cpp" />
     <ClCompile Include="Octree.cpp" />
     <ClCompile Include="real_time_point_cloud_compression.cpp" />
     <ClCompile Include="sancho.cpp" />
@@ -135,7 +134,6 @@
   <ItemGroup>
     <ClInclude Include="camera.h" />
     <ClInclude Include="common_includes.h" />
-    <ClInclude Include="EigenTree.h" />
     <ClInclude Include="Octree.h" />
     <ClInclude Include="Patch.h" />
     <ClInclude Include="performance_metrics.h" />
