@@ -1,9 +1,5 @@
 #pragma once
 
-#include "settings.h"
-#include "common_includes.h"
-#include "shader.h"
-
 class Patch {
 public:
 	Patch() {};

@@ -19,11 +19,3 @@
 
 // local files
 #include "os_timer.h"
-
-//void DrawWireCube(double size) {
-//
-//}
-//
-//void DrawSolidCube(double size) {
-//
-//}

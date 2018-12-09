@@ -62,9 +62,6 @@
     <ClInclude Include="settings.h">
       <Filter>Header Files\Real-Time Point Cloud Compression</Filter>
     </ClInclude>
-    <ClInclude Include="Plane.h">
-      <Filter>Header Files\Real-Time Point Cloud Compression</Filter>
-    </ClInclude>
     <ClInclude Include="PointCloud.h">
       <Filter>Header Files</Filter>
     </ClInclude>

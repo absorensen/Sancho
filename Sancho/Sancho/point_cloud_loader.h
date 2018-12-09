@@ -7,6 +7,7 @@
 
 #include "PointCloud.h"
 #include "Patch.h"
+#include "settings.h"
 
 void load_point_cloud(const std::string path, const unsigned int no_of_points, const unsigned int no_of_coords, PointCloud &point_cloud) 
 {

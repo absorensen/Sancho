@@ -10,7 +10,7 @@ const float ASPECT_RATIO = (static_cast<float>(SCR_WIDTH) / static_cast<float>(S
 static const float SCALE = 1.0f / static_cast<float>(SCR_WIDTH);
 static const float PI = 3.14159265359f;
 static const double key_press_threshold = 0.25;
-float _point_size = 0.01f;
+float _point_size = 0.001f;
 bool octree_show_all_levels = false;
 int octree_show_level = 0;
 double time_since_last_frame = 0.0;
@@ -18,8 +18,10 @@ bool draw_patch_normals = false;
 bool draw_patch_planes = false;
 
 // camera
-//Camera camera(-2.0f, 1.5f, 3.4f, 0.0f, 1.0f, 0.0f, -50.0f, -12.0f);
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+// Room2 starting point
+//Camera camera(0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 90.0f, 0.0f);
+// Stan starting point
+Camera camera(glm::vec3(0.0f, 0.0f, 0.2f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -75,7 +77,7 @@ int main(int argc, char * argv[]) {
 
 	PointCloud point_cloud;
 	PointCloud point_cloud_b;
-	settings.state = DECOMPRESS;
+	settings.state = COMPRESS;
 	settings.comp_mode = D;
 	if (settings.state == DECOMPRESS) {
 		//load_point_cloud_from_binary("Room2.bin", point_cloud);
@@ -86,8 +88,8 @@ int main(int argc, char * argv[]) {
 	}
 	else if (settings.state == COMPRESS) {
 		//load_point_cloud("../Cube.txt", 8, 3, point_cloud);
-		//load_point_cloud("../stan.txt", 2503, 3, point_cloud);
-		load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
+		load_point_cloud("../stan.txt", 2503, 3, point_cloud);
+		//load_point_cloud("../Room2.txt", 112586, 3, point_cloud);
 		//load_point_cloud("../Room.txt", 831159, 3, point_cloud);
 		//load_point_cloud("../Box.txt", 964806, 3, point_cloud);
 		

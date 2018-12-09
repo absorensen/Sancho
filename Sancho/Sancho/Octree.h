@@ -8,20 +8,6 @@
 
 #include "Patch.h"
 
-//class Patch {
-//public:
-//	Patch();
-//	~Patch();
-//
-//	// article specifies position, orientation and size
-//	double plane_dir1[3];
-//	double plane_dir2[3];
-//	double plane_norm[3];
-//	double origin[3];
-//	double quant_x, quant_y, quant_z, num_points;
-//	int8_t* points;
-//};
-
 class Octree {
 public:
 
